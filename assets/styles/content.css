@@ -1,6 +1,7 @@
 /* 
  * Content styles for search result indicators
  * Using golden ratio (1:1.618) for proportions
+ * Designed for high-quality visual feedback and accessibility
  */
 
 :root {
@@ -14,84 +15,142 @@
   --size-md: calc(var(--size-sm) * var(--phi));
   --size-lg: calc(var(--size-md) * var(--phi));
   
-  /* Colors */
-  --color-primary: #4a6fa5;
-  --color-secondary: #e9ecef;
-  --color-accent: #ffc107;
+  /* Brand Colors */
+  --color-primary-red: #A52A2A;
+  --color-primary-blue: #46C2FF;
   
-  /* Bias colors */
-  --color-left: #3b5bdb;
-  --color-lean-left: #748ffc;
+  /* UI Colors */
+  --color-primary: var(--color-primary-blue);
+  --color-secondary: #f8f9fa;
+  --color-accent: var(--color-primary-red);
+  --color-text-dark: #343a40;
+  --color-text-light: #f8f9fa;
+  --color-border: rgba(0, 0, 0, 0.1);
+  
+  /* Bias colors - updated to match brand palette */
+  --color-left: var(--color-primary-blue);
+  --color-lean-left: #78D1FF; /* Lighter version of primary blue */
   --color-center: #82c91e;
-  --color-lean-right: #ff8787;
-  --color-right: #e03131;
+  --color-lean-right: #C76363; /* Lighter version of primary red */
+  --color-right: var(--color-primary-red);
   
-  /* Reliability colors */
+  /* Reliability colors - enhanced for better contrast */
   --color-high: #40c057;
   --color-medium: #fab005;
   --color-low: #fa5252;
+  
+  /* Animation speeds */
+  --transition-fast: 150ms;
+  --transition-normal: 250ms;
+  
+  /* Effects */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+  --radius-sm: var(--size-xs);
+  --radius-md: calc(var(--size-xs) * 1.5);
+  --radius-lg: calc(var(--size-sm) * 0.75);
 }
 
-/* Bias indicator container */
+/* Bias indicator container - refined for better visibility */
 .infodemic-indicator {
   display: inline-flex;
   align-items: center;
   margin-left: var(--size-sm);
   font-size: var(--size-sm);
-  border-radius: var(--size-xs);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 5; /* Ensure visibility above search result content */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .infodemic-indicator:hover {
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
-/* Bias pill */
+.infodemic-indicator:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Bias pill with enhanced contrast and legibility */
 .bias-pill {
   display: flex;
   align-items: center;
-  padding: calc(var(--size-xs) / 2) var(--size-xs);
+  padding: calc(var(--size-xs) * 0.75) var(--size-xs);
   color: white;
-  font-weight: 500;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
-/* Reliability indicator */
+/* Bias icon styling for better visual hierarchy */
+.bias-icon {
+  margin-right: calc(var(--size-xs) * 0.5);
+  font-size: calc(var(--size-sm) * 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Reliability indicator with improved contrast */
 .reliability-indicator {
   display: flex;
   align-items: center;
-  padding: calc(var(--size-xs) / 2) var(--size-xs);
+  padding: calc(var(--size-xs) * 0.75) var(--size-xs);
   background-color: var(--color-secondary);
-  color: #495057;
+  color: var(--color-text-dark);
+  font-weight: 500;
+  border-left: 1px solid var(--color-border);
 }
 
-/* Bias colors */
+/* Reliability icon styling */
+.reliability-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: calc(var(--size-xs) * 0.5);
+  font-size: calc(var(--size-sm) * 0.85);
+}
+
+/* Bias colors with improved accessibility */
 .bias-left {
   background-color: var(--color-left);
+  color: var(--color-text-light);
 }
 
 .bias-lean-left {
   background-color: var(--color-lean-left);
+  color: var(--color-text-dark); /* Darker text for contrast */
 }
 
 .bias-center {
   background-color: var(--color-center);
+  color: var(--color-text-dark);
 }
 
 .bias-lean-right {
   background-color: var(--color-lean-right);
+  color: var(--color-text-light);
 }
 
 .bias-right {
   background-color: var(--color-right);
+  color: var(--color-text-light);
 }
 
 .bias-unknown {
   background-color: #adb5bd;
+  color: var(--color-text-light);
 }
 
-/* Reliability icons */
+/* Reliability icons with improved visual feedback */
 .reliability-high {
   color: var(--color-high);
 }
@@ -108,28 +167,30 @@
   color: #adb5bd;
 }
 
-/* Tooltip styles */
+/* Enhanced tooltip styles for better readability */
 .infodemic-tooltip {
   position: relative;
 }
 
 .infodemic-tooltip .tooltip-content {
   visibility: hidden;
-  width: calc(var(--size-lg) * 2);
-  background-color: #343a40;
+  width: calc(var(--size-lg) * 1.75);
+  background-color: var(--color-text-dark);
   color: white;
-  text-align: center;
-  border-radius: var(--size-xs);
-  padding: var(--size-xs);
+  text-align: left;
+  border-radius: var(--radius-sm);
+  padding: var(--size-sm);
   position: absolute;
   z-index: 1000;
   bottom: 125%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(var(--size-xs));
   opacity: 0;
-  transition: opacity 0.3s;
-  font-size: calc(var(--size-xs) * 1.25);
+  transition: opacity var(--transition-normal), transform var(--transition-normal);
+  font-size: calc(var(--size-sm) * 0.9);
   pointer-events: none;
+  box-shadow: var(--shadow-lg);
+  line-height: 1.4;
 }
 
 .infodemic-tooltip .tooltip-content::after {
@@ -140,53 +201,143 @@
   margin-left: calc(var(--size-xs) * -0.5);
   border-width: var(--size-xs);
   border-style: solid;
-  border-color: #343a40 transparent transparent transparent;
+  border-color: var(--color-text-dark) transparent transparent transparent;
 }
 
 .infodemic-tooltip:hover .tooltip-content {
   visibility: visible;
   opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
-/* Colorblind friendly mode */
+/* Source label in tooltip */
+.tooltip-source {
+  font-weight: 600;
+  margin-bottom: var(--size-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Metrics in tooltip */
+.tooltip-metrics {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--size-xs);
+}
+
+.tooltip-metric {
+  display: flex;
+  flex-direction: column;
+}
+
+.tooltip-metric-label {
+  font-size: calc(var(--size-xs) * 1.2);
+  opacity: 0.8;
+  margin-bottom: 2px;
+}
+
+.tooltip-metric-value {
+  font-weight: 500;
+}
+
+/* Colorblind friendly mode with optimized contrast */
 .colorblind .bias-left {
-  background-color: #0072B2;
+  background-color: #0072B2; /* Blue */
 }
 
 .colorblind .bias-lean-left {
-  background-color: #56B4E9;
+  background-color: #56B4E9; /* Light blue */
 }
 
 .colorblind .bias-center {
-  background-color: #009E73;
+  background-color: #009E73; /* Green */
 }
 
 .colorblind .bias-lean-right {
-  background-color: #E69F00;
+  background-color: #E69F00; /* Orange */
 }
 
 .colorblind .bias-right {
-  background-color: #D55E00;
+  background-color: #D55E00; /* Red-orange */
 }
 
-/* Monochrome mode */
+/* Monochrome mode with proper contrast ratios */
 .monochrome .bias-left {
   background-color: #000000;
+  color: white;
 }
 
 .monochrome .bias-lean-left {
-  background-color: #555555;
+  background-color: #444444;
+  color: white;
 }
 
 .monochrome .bias-center {
-  background-color: #888888;
+  background-color: #777777;
+  color: white;
 }
 
 .monochrome .bias-lean-right {
-  background-color: #bbbbbb;
+  background-color: #aaaaaa;
+  color: black;
 }
 
 .monochrome .bias-right {
-  background-color: #eeeeee;
-  color: #000000;
+  background-color: #dddddd;
+  color: black;
+}
+
+/* Context menu result popup enhancements */
+.infodemic-popup {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  animation: infodemicFadeIn var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes infodemicFadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(var(--size-sm)); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+/* Optimize for different search engines */
+.google-search .infodemic-indicator {
+  vertical-align: middle;
+  margin-left: var(--size-xs);
+  font-size: calc(var(--size-sm) * 0.9);
+}
+
+.bing-search .infodemic-indicator {
+  vertical-align: middle;
+  margin-left: var(--size-xs);
+  margin-top: 1px;
+}
+
+.duckduckgo-search .infodemic-indicator {
+  vertical-align: middle;
+  margin-left: var(--size-xs);
+  margin-top: 2px;
+}
+
+/* Responsive adjustments for mobile search */
+@media (max-width: 640px) {
+  .infodemic-indicator {
+    font-size: calc(var(--size-xs) * 1.2);
+  }
+  
+  .bias-pill, .reliability-indicator {
+    padding: calc(var(--size-xs) * 0.5) calc(var(--size-xs) * 0.75);
+  }
+  
+  .infodemic-tooltip .tooltip-content {
+    width: calc(var(--size-lg) * 1.25);
+    padding: var(--size-xs);
+    font-size: var(--size-xs);
+  }
 }

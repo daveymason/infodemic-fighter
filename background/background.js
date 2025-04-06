@@ -262,7 +262,7 @@ function createEnhancedBiasPopup(biasData) {
         </div>
         <div class="infodemic-footer">
           <div>Powered by Infodemic Fighter</div>
-          <div>v1.0.0</div>
+          <div>v0.1.0</div>
         </div>
       </div>
     </div>

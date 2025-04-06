@@ -28,13 +28,10 @@ The extension helps users become more aware of the potential biases in the infor
 ## Features
 
 - **Political Bias Detection**: Identifies where sources fall on the political spectrum (Left, Lean Left, Center, Lean Right, Right)
-- **Reliability Assessment**: Indicates the general reliability of sources based on their factual reporting history
-- **Multiple Search Engine Support**: Works with Google, Bing, and DuckDuckGo
-- **Golden Ratio Design**: All visual elements follow the golden ratio (1:1.618) for aesthetically pleasing proportions
-- **Minimalist Interface**: Clean, unobtrusive indicators that don't distract from your search experience
-- **Accessibility Options**: Includes colorblind-friendly and monochrome display modes
-- **FontAwesome Icons**: Uses the latest FontAwesome icons for clear visual feedback
-- **Vue.js Framework**: Built with Vue.js for a responsive, maintainable codebase
+- **Right-Click Menu**: Check any link's bias with our context menu
+- **Visual Indicators**: Clean, unobtrusive markers that don't distract from search experience
+- **Privacy-Focused**: All processing happens locally - no data sent to external servers
+- **Customizable**: Choose what indicators to display and adjust visual preferences
 
 ## Installation
 
@@ -57,7 +54,7 @@ The extension helps users become more aware of the potential biases in the infor
 1. After installation, the Infodemic Fighter icon will appear in your browser toolbar
 2. Perform a search on Google, Bing, or DuckDuckGo
 3. Notice the small indicators that appear next to each search result
-4. Hover over an indicator to see more detailed information about the source
+4. Right click on a link and press "Check for bias"
 5. Click the extension icon to access settings and customize your experience
 
 ## Settings
@@ -94,35 +91,10 @@ Infodemic Fighter respects your privacy:
 - No personal information is collected
 - No browsing history is tracked or stored
 
-## Validation and Research
+## Sources
 
-The need for tools to combat the infodemic is well-documented by organizations like the World Health Organization and academic research. Our approach is informed by:
+Our bias and reliability ratings are based on methodologies from established organizations like AllSides, Media Bias/Fact Check, and Ad Fontes Media.
 
-1. WHO's definition and research on infodemics
-2. Established media bias rating methodologies from organizations like AllSides, Media Bias/Fact Check, and Ad Fontes Media
-3. Research on filter bubbles and their impact on information consumption
-4. Studies on visual indicators and their effectiveness in information literacy
-
-## Future Development
-
-Planned features for future releases:
-
-- Support for additional search engines
-- More detailed bias analysis
-- Integration with fact-checking services
-- User feedback mechanism for improving bias ratings
-- Machine learning for improved detection of unlisted sources
-
-## Contributing
-
-Contributions are welcome! If you'd like to contribute to Infodemic Fighter:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-Please ensure your code follows the project's coding standards and includes appropriate tests.
 
 ## License
 
@@ -134,3 +106,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - AllSides, Media Bias/Fact Check, and Ad Fontes Media for their media bias research methodologies
 - FontAwesome for their excellent icon library
 - Vue.js team for their fantastic framework
+
+

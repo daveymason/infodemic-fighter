@@ -43,6 +43,7 @@ function detectSearchEngine() {
   if (url.includes('google.com/search')) {
     console.log('Google search detected');
     processGoogleSearch();
+    processGoogleNewsResults();
   } else if (url.includes('bing.com/search')) {
     console.log('Bing search detected');
     processBingSearch();
@@ -52,26 +53,116 @@ function detectSearchEngine() {
   }
 }
 
-// Process Google search results
+// Replace the current processGoogleSearch function with this improved version:
 function processGoogleSearch() {
   console.log('Processing Google search results');
   
-  // Get all search result elements that DON'T already have indicators
-  const searchResults = [
-    ...document.querySelectorAll('div.g:not(:has(.infodemic-indicator))'),
-    ...document.querySelectorAll('.srKDX:not(:has(.infodemic-indicator))'),
-    ...document.querySelectorAll('.xpd:not(:has(.infodemic-indicator))')
-  ];
+  // Get ALL div elements that might contain search results
+  const allDivs = document.querySelectorAll('div');
+  const potentialResults = [];
   
-  console.log(`Found ${searchResults.length} Google search results to process`);
-  
-  if (searchResults.length > 0) {
-    // Process in batches to avoid freezing the UI
-    processBatch(searchResults, 0, 5);
+  // Find divs that contain links but don't have our indicators yet
+  for (const div of allDivs) {
+    if (
+      // Skip if already processed
+      !div.querySelector('.infodemic-indicator') && 
+      // Must have links
+      div.querySelector('a[href^="http"]') &&
+      // Should have some of Google's typical search result classes or attributes
+      (div.hasAttribute('data-hveid') || 
+       div.classList.contains('g') || 
+       div.classList.contains('xpd') ||
+       div.classList.contains('MjjYud') ||
+       div.classList.contains('Jb0Zif') ||
+       div.classList.contains('ULSxyf') ||
+       div.classList.contains('v7W49e') ||
+       div.classList.contains('srKDX') ||
+       div.classList.contains('tF2Cxc'))
+    ) {
+      potentialResults.push(div);
+    }
   }
+  
+  console.log(`Found ${potentialResults.length} potential Google search results`);
+  
+  // Process all links regardless of container
+  const allLinks = document.querySelectorAll('a[href^="http"]:not([href*="google.com"]):not(:has(+ .infodemic-indicator))');
+  console.log(`Found ${allLinks.length} raw links to process`);
+  
+  // Process potential containers first
+  if (potentialResults.length > 0) {
+    processBatch(potentialResults, 0, 5);
+  }
+  
+  // Also process any direct links that might be missed
+  processRawLinks(allLinks);
   
   // Set up observer for dynamic loading
   setupMutationObserver();
+}
+
+// New function to process all links directly
+function processRawLinks(links) {
+  for (const link of links) {
+    // Skip links that are already part of a processed result
+    if (hasAncestorWithIndicator(link)) continue;
+    
+    // Get the URL
+    const url = link.href;
+    if (!url) continue;
+    
+    // Skip Google internal links
+    if (url.includes('google.com')) continue;
+    
+    console.log('Processing raw link:', url);
+    
+    // Check URL against bias database
+    chrome.runtime.sendMessage({ type: 'CHECK_URL', url }, (response) => {
+      if (response && response.biasData && response.biasData.bias !== 'unknown') {
+        console.log('Got bias data for raw link:', url, response.biasData);
+        
+        // Create and insert bias indicator
+        const indicator = createBiasIndicator(response.biasData);
+        
+        // Try to insert at meaningful locations
+        try {
+          // Try to find a better place to insert - look for citation or heading
+          const resultElement = findParentResultElement(link);
+          if (resultElement) {
+            const insertTarget = 
+              resultElement.querySelector('cite') || 
+              resultElement.querySelector('.VuuXrf') ||
+              resultElement.querySelector('h3') ||
+              link;
+              
+            insertTarget.insertAdjacentElement('afterend', indicator);
+          } else {
+            // Just insert after the link itself
+            link.insertAdjacentElement('afterend', indicator);
+          }
+        } catch (e) {
+          console.error('Error inserting indicator for raw link:', e);
+        }
+      }
+    });
+  }
+}
+
+// Helper to check if an element has an ancestor with an indicator already
+function hasAncestorWithIndicator(element) {
+  let current = element.parentElement;
+  const maxLevels = 6;
+  let level = 0;
+  
+  while (current && level < maxLevels) {
+    if (current.querySelector('.infodemic-indicator')) {
+      return true;
+    }
+    current = current.parentElement;
+    level++;
+  }
+  
+  return false;
 }
 
 // Process results in smaller batches to prevent UI freezing
@@ -109,38 +200,164 @@ function processDuckDuckGoSearch() {
 // Process a single search result
 function processSearchResult(resultElement) {
   // Check if already processed
-  if (resultElement.querySelector('.infodemic-indicator')) return;
+  if (resultElement.querySelector('.infodemic-indicator')) {
+    console.log('Result already processed, skipping');
+    return;
+  }
   
-  // Find the link element - try multiple possible selectors
-  const linkElement = 
-    resultElement.querySelector('a.zReHs') || 
-    resultElement.querySelector('a[jsname="UWckNb"]') ||
-    resultElement.querySelector('a');
+  // Try to find source text first - this helps with AP News and other sources
+  const sourceElements = [
+    resultElement.querySelector('.VuuXrf'),
+    resultElement.querySelector('.qLRx3b'),
+    resultElement.querySelector('cite'),
+    resultElement.querySelector('.UPmit')
+  ].filter(Boolean);
+  
+  if (sourceElements.length > 0) {
+    const sourceText = sourceElements[0].textContent.trim();
+    console.log('Found source text:', sourceText);
     
-  if (!linkElement) return;
+    // Check if we have AP News or similar cases
+    if (sourceText.includes('AP News') || sourceText.includes('Associated Press')) {
+      console.log('Found AP News reference');
+      
+      // Create indicator directly
+      const apBiasData = {
+        bias: 'center',
+        reliability: 'high',
+        name: 'Associated Press'
+      };
+      
+      const indicator = createBiasIndicator(apBiasData);
+      sourceElements[0].insertAdjacentElement('afterend', indicator);
+      return;
+    }
+    
+    // Try checking the source text against our database
+    chrome.runtime.sendMessage({ type: 'CHECK_SOURCE', source: sourceText }, (response) => {
+      if (response && response.biasData && response.biasData.bias !== 'unknown') {
+        console.log('Got bias data for source:', response.biasData);
+        const indicator = createBiasIndicator(response.biasData);
+        sourceElements[0].insertAdjacentElement('afterend', indicator);
+        return;
+      } else {
+        // Fall back to URL-based detection
+        processSearchResultUsingUrl(resultElement);
+      }
+    });
+  } else {
+    // Fall back to URL-based detection
+    processSearchResultUsingUrl(resultElement);
+  }
+}
+
+// Process search result using URL
+function processSearchResultUsingUrl(resultElement) {
+  // Try multiple selectors to find link elements
+  const linkElements = [
+    resultElement.querySelector('a[href^="http"]:not([href*="google.com"])'),
+    resultElement.querySelector('a.zReHs'),
+    resultElement.querySelector('a[jsname="UWckNb"]'),
+    ...resultElement.querySelectorAll('a[href^="https://"]'),
+    ...resultElement.querySelectorAll('a[href^="http://"]')
+  ].filter(Boolean);
   
+  if (linkElements.length === 0) {
+    console.log('No link elements found in result');
+    return;
+  }
+  
+  // Get the main link (usually the first one)
+  const linkElement = linkElements[0];
   const url = linkElement.href;
-  if (!url) return;
+  if (!url) {
+    console.log('No URL found in link element');
+    return;
+  }
+  
+  // Special case for AP News
+  if (url.includes('apnews.com')) {
+    console.log('Found AP News URL:', url);
+    
+    // Create indicator directly
+    const apBiasData = {
+      bias: 'center',
+      reliability: 'high',
+      name: 'Associated Press'
+    };
+    
+    const indicator = createBiasIndicator(apBiasData);
+    
+    // Find best place to insert
+    const insertTargets = [
+      resultElement.querySelector('cite'),
+      resultElement.querySelector('.VuuXrf'),
+      resultElement.querySelector('.qLRx3b'),
+      linkElement.closest('h3'),
+      linkElement
+    ].filter(Boolean);
+    
+    if (insertTargets.length > 0) {
+      insertTargets[0].insertAdjacentElement('afterend', indicator);
+    }
+    
+    return;
+  }
   
   console.log('Processing search result with URL:', url);
   
   // Check URL against bias database
   chrome.runtime.sendMessage({ type: 'CHECK_URL', url }, (response) => {
-    if (response && response.biasData) {
+    if (!response || !response.biasData) {
+      console.log('No bias data returned for URL:', url);
+      return;
+    }
+    
+    console.log('Got bias data for', url, ':', response.biasData);
+    
+    // Only create indicator if we have meaningful bias data
+    if (response.biasData.bias !== 'unknown' || response.biasData.name !== 'unknown') {
       // Create and insert bias indicator
       const indicator = createBiasIndicator(response.biasData);
       
-      // Find the right place to insert the indicator
-      // Try multiple potential parent elements based on the DOM structure
-      const titleElement = 
-        linkElement.closest('h3') || 
-        linkElement.closest('.yuRUbf') || 
-        linkElement;
-        
-      titleElement.insertAdjacentElement('afterend', indicator);
+      // Try multiple potential places to insert the indicator
+      let inserted = false;
       
-      // Apply styles to make indicator visible
-      applyIndicatorStyles(indicator);
+      // Potential target elements in order of preference
+      const possibleTargets = [
+        resultElement.querySelector('cite'),
+        resultElement.querySelector('.UPmit'),
+        resultElement.querySelector('.VuuXrf'), 
+        resultElement.querySelector('.qLRx3b'),
+        resultElement.querySelector('.tjvcx'),
+        resultElement.querySelector('span[role="text"]'),
+        linkElement.closest('h3'),
+        linkElement
+      ].filter(Boolean);
+      
+      for (const target of possibleTargets) {
+        try {
+          target.insertAdjacentElement('afterend', indicator);
+          console.log('Successfully inserted indicator after', target);
+          inserted = true;
+          break;
+        } catch (e) {
+          console.log('Failed to insert after target, trying next');
+        }
+      }
+      
+      // If none of the targets worked, try parent elements
+      if (!inserted) {
+        try {
+          const parent = linkElement.parentElement;
+          if (parent) {
+            parent.insertAdjacentElement('beforeend', indicator);
+            console.log('Inserted indicator at end of parent element');
+          }
+        } catch (e) {
+          console.error('Failed to insert indicator:', e);
+        }
+      }
     }
   });
 }
@@ -168,49 +385,126 @@ function createBiasIndicator(biasData) {
       case 'left':
         biasPill.style.backgroundColor = '#0000FF';
         biasPill.style.color = '#FFFFFF';
+        biasPill.textContent = 'L';
         break;
-      case 'center-left':
+      case 'lean-left':
         biasPill.style.backgroundColor = '#6495ED';
         biasPill.style.color = '#FFFFFF';
+        biasPill.textContent = 'CL';
         break;
       case 'center':
         biasPill.style.backgroundColor = '#808080';
         biasPill.style.color = '#FFFFFF';
+        biasPill.textContent = 'C';
         break;
-      case 'center-right':
+      case 'lean-right':
         biasPill.style.backgroundColor = '#FFA500';
         biasPill.style.color = '#FFFFFF';
+        biasPill.textContent = 'CR';
         break;
       case 'right':
         biasPill.style.backgroundColor = '#FF0000';
         biasPill.style.color = '#FFFFFF';
+        biasPill.textContent = 'R';
         break;
       default:
         biasPill.style.backgroundColor = '#D3D3D3';
         biasPill.style.color = '#333333';
+        biasPill.textContent = '?';
     }
     
-    // Add FontAwesome icon
-    const biasType = getBiasType(biasData.bias);
-    const iconClass = getBiasIconClass(biasType);
-    biasPill.innerHTML = `<i class="${iconClass}"></i>`;
     container.appendChild(biasPill);
   }
   
-  // Rest of the function remains the same...
+  // Show reliability indicator if enabled
+  if (settings.showReliabilityIndicator && biasData.reliability !== 'unknown') {
+    const reliabilityPill = document.createElement('div');
+    reliabilityPill.className = `reliability-pill reliability-${biasData.reliability}`;
+    reliabilityPill.style.padding = '2px 6px';
+    reliabilityPill.style.borderRadius = '12px';
+    reliabilityPill.style.fontSize = '12px';
+    reliabilityPill.style.fontWeight = 'bold';
+    
+    switch(biasData.reliability) {
+      case 'high':
+        reliabilityPill.style.backgroundColor = '#4CAF50';
+        reliabilityPill.style.color = '#FFFFFF';
+        reliabilityPill.textContent = 'H';
+        break;
+      case 'medium':
+        reliabilityPill.style.backgroundColor = '#FF9800';
+        reliabilityPill.style.color = '#FFFFFF';
+        reliabilityPill.textContent = 'M';
+        break;
+      case 'low':
+        reliabilityPill.style.backgroundColor = '#F44336';
+        reliabilityPill.style.color = '#FFFFFF';
+        reliabilityPill.textContent = 'L';
+        break;
+    }
+    
+    container.appendChild(reliabilityPill);
+  }
+  
+  // Add tooltip functionality
+  const tooltip = document.createElement('div');
+  tooltip.className = 'infodemic-tooltip-text';
+  tooltip.style.visibility = 'hidden';
+  tooltip.style.position = 'absolute';
+  tooltip.style.zIndex = '10000';
+  tooltip.style.backgroundColor = 'white';
+  tooltip.style.color = 'black';
+  tooltip.style.border = '1px solid #ddd';
+  tooltip.style.padding = '10px';
+  tooltip.style.borderRadius = '4px';
+  tooltip.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+  tooltip.style.width = '200px';
+  tooltip.style.fontSize = '12px';
+  tooltip.style.top = '-80px';
+  tooltip.style.left = '0';
+  
+  tooltip.innerHTML = `
+    <div style="font-weight:bold;margin-bottom:5px;border-bottom:1px solid #eee;padding-bottom:5px;">
+      ${biasData.name || 'Unknown Source'}
+    </div>
+    <div>
+      <div><strong>Political Bias:</strong> ${formatBiasLabel(biasData.bias)}</div>
+      <div><strong>Reliability:</strong> ${formatReliabilityLabel(biasData.reliability)}</div>
+    </div>
+  `;
+  
+  container.appendChild(tooltip);
+  
+  container.addEventListener('mouseenter', () => {
+    tooltip.style.visibility = 'visible';
+  });
+  
+  container.addEventListener('mouseleave', () => {
+    tooltip.style.visibility = 'hidden';
+  });
   
   return container;
 }
 
-// Helper function to convert bias value to display type
-function getBiasType(bias) {
+// Format bias label for display
+function formatBiasLabel(bias) {
   switch(bias) {
-    case 'left': return 'L';
-    case 'center-left': return 'CL';
-    case 'center': return 'C';
-    case 'center-right': return 'CR';
-    case 'right': return 'R';
-    default: return '?';
+    case 'left': return 'Left';
+    case 'lean-left': return 'Center-Left';
+    case 'center': return 'Center';
+    case 'lean-right': return 'Center-Right';
+    case 'right': return 'Right';
+    default: return 'Unknown';
+  }
+}
+
+// Format reliability label for display
+function formatReliabilityLabel(reliability) {
+  switch(reliability) {
+    case 'high': return 'High';
+    case 'medium': return 'Medium';
+    case 'low': return 'Low';
+    default: return 'Unknown';
   }
 }
 
@@ -236,8 +530,10 @@ function getReliabilityIconClass(reliabilityType) {
   }
 }
 
-// Set up mutation observer to handle dynamically loaded content - FIX CRASH ISSUES
+// Set up mutation observer to handle dynamically loaded content
 function setupMutationObserver() {
+  console.log('Setting up mutation observer');
+  
   // Track if we're currently processing to prevent infinite loops
   let isProcessing = false;
   
@@ -250,65 +546,112 @@ function setupMutationObserver() {
     
     // Get the search engine type
     const url = window.location.href;
-    if (url.includes('google.com/search')) {
-      // Only process NEW results that don't have indicators yet
-      const newResults = [
-        ...document.querySelectorAll('div.g:not(:has(.infodemic-indicator))'),
-        ...document.querySelectorAll('.srKDX:not(:has(.infodemic-indicator))'),
-        ...document.querySelectorAll('.xpd:not(:has(.infodemic-indicator))')
-      ];
-      
-      if (newResults.length > 0) {
-        console.log(`Found ${newResults.length} new Google search results`);
-        newResults.forEach(processSearchResult);
-      }
+    if (url.includes('google.com')) {
+      processGoogleSearch();
+      processGoogleNewsResults();
+    } else if (url.includes('bing.com')) {
+      processBingSearch();
+    } else if (url.includes('duckduckgo.com')) {
+      processDuckDuckGoSearch();
     }
     
     isProcessing = false;
-  }, 500); // Wait 500ms before processing to batch changes
+  }, 1000);
   
   // Create the observer with the debounced callback
   const observer = new MutationObserver((mutations) => {
-    // Check if any mutations are relevant before triggering processing
-    const hasRelevantMutations = mutations.some(mutation => 
+    // Only process if there are actual content changes
+    const hasContentChanges = mutations.some(mutation => 
       mutation.type === 'childList' && 
       mutation.addedNodes.length > 0 &&
-      // Avoid processing our own injected elements
       !Array.from(mutation.addedNodes).some(node => 
-        node.classList && 
-        (node.classList.contains('infodemic-indicator') || 
-         node.classList.contains('infodemic-tooltip'))
+        node.classList && node.classList.contains('infodemic-indicator')
       )
     );
     
-    if (hasRelevantMutations) {
+    if (hasContentChanges) {
+      console.log('Detected DOM changes, scheduling processing');
       debouncedProcess();
+      
+      // Check specifically for AP News links in the new content
+      setTimeout(() => {
+        const newApLinks = document.querySelectorAll('a[href*="apnews.com"]:not(:has(+ .infodemic-indicator))');
+        if (newApLinks.length > 0) {
+          console.log(`Found ${newApLinks.length} new AP News links`);
+          
+          newApLinks.forEach(link => {
+            const resultElement = findParentResultElement(link);
+            if (resultElement && !resultElement.querySelector('.infodemic-indicator')) {
+              console.log('Processing new AP News link');
+              
+              const apBiasData = {
+                bias: 'center',
+                reliability: 'high',
+                name: 'Associated Press'
+              };
+              
+              const indicator = createBiasIndicator(apBiasData);
+              
+              // Insert after the closest cite or link text
+              const insertTarget = 
+                resultElement.querySelector('cite') || 
+                resultElement.querySelector('.VuuXrf') ||
+                link;
+                
+              insertTarget.insertAdjacentElement('afterend', indicator);
+            }
+          });
+        }
+      }, 500);
     }
   });
   
-  // Observe only specific containers, not the entire body
-  const searchContainers = [
-    document.querySelector('#search'),
-    document.querySelector('#rso'),
-    document.querySelector('#center_col'),
-    document.querySelector('#main')
-  ].filter(Boolean); // Filter out null elements
+  // Target specific containers based on search engine
+  let targetContainers = [];
   
-  if (searchContainers.length > 0) {
-    searchContainers.forEach(container => {
+  if (window.location.href.includes('google.com')) {
+    targetContainers = [
+      document.querySelector('#search'),
+      document.querySelector('#rso'),
+      document.querySelector('#center_col'),
+      document.querySelector('div[role="main"]'),
+      document.querySelector('#rcnt')
+    ].filter(Boolean);
+  } else if (window.location.href.includes('bing.com')) {
+    targetContainers = [
+      document.querySelector('#b_results'),
+      document.querySelector('#b_content')
+    ].filter(Boolean);
+  } else if (window.location.href.includes('duckduckgo.com')) {
+    targetContainers = [
+      document.querySelector('.serp__results'),
+      document.querySelector('#links')
+    ].filter(Boolean);
+  }
+  
+  if (targetContainers.length > 0) {
+    for (const container of targetContainers) {
+      console.log('Adding observer to container:', container);
       observer.observe(container, { 
         childList: true, 
         subtree: true 
       });
-    });
-    console.log('Mutation observer set up for search containers');
+    }
   } else {
-    // Fallback to body if no containers found, but with more restricted options
-    observer.observe(document.body, { 
-      childList: true, 
-      subtree: false // Don't observe the entire subtree to reduce overhead
-    });
-    console.log('Mutation observer set up for body (fallback)');
+    // Fallback to observing the main content areas
+    const mainContainers = [
+      document.querySelector('main'),
+      document.querySelector('#main'),
+      document.body
+    ].filter(Boolean);
+    
+    for (const container of mainContainers) {
+      console.log('Adding fallback observer to:', container);
+      observer.observe(container, { 
+        childList: true, 
+        subtree: true 
+      });
+    }
   }
 }
 
@@ -323,4 +666,190 @@ function debounce(func, wait) {
       func.apply(context, args);
     }, wait);
   };
+}
+
+// Inside the DOMContentLoaded event handler, add:
+// Manual check for AP News URLs and other special cases
+const apNewsLinks = [
+  ...document.querySelectorAll('a[href*="apnews.com"]'),
+  ...document.querySelectorAll('a[href*="ap.org"]')
+];
+
+if (apNewsLinks.length > 0) {
+  console.log(`Found ${apNewsLinks.length} AP News links`);
+  
+  apNewsLinks.forEach(link => {
+    const resultElement = findParentResultElement(link);
+    if (resultElement && !resultElement.querySelector('.infodemic-indicator')) {
+      console.log('Processing AP News link');
+      
+      const apBiasData = {
+        bias: 'center',
+        reliability: 'high',
+        name: 'Associated Press'
+      };
+      
+      const indicator = createBiasIndicator(apBiasData);
+      
+      // Insert after the closest cite or link text
+      const insertTarget = 
+        resultElement.querySelector('cite') || 
+        resultElement.querySelector('.VuuXrf') ||
+        link;
+        
+      insertTarget.insertAdjacentElement('afterend', indicator);
+    }
+  });
+}
+
+// Helper function to find parent result element
+function findParentResultElement(element) {
+  let current = element;
+  const maxLevels = 6;
+  let level = 0;
+  
+  while (current && level < maxLevels) {
+    if (
+      current.classList.contains('g') ||
+      current.classList.contains('srKDX') ||
+      current.classList.contains('xpd') ||
+      current.classList.contains('MjjYud') ||
+      current.classList.contains('v7W49e') ||
+      current.hasAttribute('data-hveid')
+    ) {
+      return current;
+    }
+    current = current.parentElement;
+    level++;
+  }
+  
+  return null;
+}
+
+// Add this function to your existing code
+function processGoogleNewsResults() {
+  console.log('Looking for Google News format results');
+  
+  // Try to find news blocks in various formats
+  const newsContainers = [
+    ...document.querySelectorAll('div.UDZeY'),
+    ...document.querySelectorAll('div.WlydOe'),
+    ...document.querySelectorAll('div[jscontroller="d0DtYd"]'),
+    ...document.querySelectorAll('g-card'),
+    ...document.querySelectorAll('div.kCrYT'),
+    ...document.querySelectorAll('div.DBQmFf')
+  ];
+  
+  console.log(`Found ${newsContainers.length} news containers`);
+  
+  // Process each news container
+  for (const container of newsContainers) {
+    // Skip if already processed
+    if (container.querySelector('.infodemic-indicator')) continue;
+    
+    // Find all links in this container
+    const links = container.querySelectorAll('a[href^="http"]');
+    
+    for (const link of links) {
+      const url = link.href;
+      if (!url || url.includes('google.com')) continue;
+      
+      console.log('Processing news link:', url);
+      
+      // Check URL against bias database
+      chrome.runtime.sendMessage({ type: 'CHECK_URL', url }, (response) => {
+        if (response && response.biasData && response.biasData.bias !== 'unknown') {
+          console.log('Got bias data for news link:', url, response.biasData);
+          
+          // Create and insert bias indicator
+          const indicator = createBiasIndicator(response.biasData);
+          
+          // Try to find source elements specific to news format
+          const sourceElement = 
+            container.querySelector('.CEMjEf') || 
+            container.querySelector('.BNeawe.UPmit.AP7Wnd') ||
+            container.querySelector('.UPmit') ||
+            container.querySelector('.TVtOme') ||
+            container.querySelector('span[role="text"]');
+            
+          if (sourceElement) {
+            sourceElement.insertAdjacentElement('afterend', indicator);
+          } else {
+            // If no source element, insert after the link's text container
+            const textContainer = link.querySelector('div') || link;
+            textContainer.insertAdjacentElement('afterend', indicator);
+          }
+        }
+      });
+    }
+  }
+}
+
+// Add this to your existing code (around line 629, after the findParentResultElement function)
+document.addEventListener('DOMContentLoaded', () => {
+  // Only run if extension is enabled
+  chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, (response) => {
+    if (response && response.settings && response.settings.enabled) {
+      console.log('DOM fully loaded, running comprehensive scan');
+      
+      // Wait a bit for any async content to load
+      setTimeout(() => {
+        // Process in stages to ensure everything is caught
+        
+        // 1. Try normal search engine detection
+        detectSearchEngine();
+        
+        // 2. Process Google News format if present
+        processGoogleNewsResults();
+        
+        // 3. Direct processing of all links as a fallback
+        const allLinks = document.querySelectorAll('a[href^="http"]:not([href*="google.com"]):not(:has(+ .infodemic-indicator))');
+        processRawLinks(allLinks);
+        
+        // 4. Set up more aggressive mutation observer
+        setupEnhancedMutationObserver();
+      }, 1000);
+    }
+  });
+});
+
+// Function to setup a more aggressive mutation observer
+function setupEnhancedMutationObserver() {
+  // Create a more aggressive observer that watches for any link changes
+  const linkObserver = new MutationObserver((mutations) => {
+    // Check if new links were added
+    const newLinks = [];
+    
+    mutations.forEach(mutation => {
+      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+        mutation.addedNodes.forEach(node => {
+          // For element nodes, look for links
+          if (node.nodeType === 1) { // Element node
+            // Check if this node is a link
+            if (node.tagName === 'A' && node.href && node.href.startsWith('http') && !node.href.includes('google.com')) {
+              newLinks.push(node);
+            }
+            
+            // Check for links in this node
+            const childLinks = node.querySelectorAll('a[href^="http"]:not([href*="google.com"])');
+            if (childLinks.length > 0) {
+              childLinks.forEach(link => newLinks.push(link));
+            }
+          }
+        });
+      }
+    });
+    
+    if (newLinks.length > 0) {
+      console.log(`Enhanced observer found ${newLinks.length} new links`);
+      // Process these new links
+      processRawLinks(newLinks);
+    }
+  });
+  
+  // Observe the entire document for any changes that might add links
+  linkObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
 }

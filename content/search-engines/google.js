@@ -8,51 +8,80 @@
 function processGoogleSearch() {
   console.log('Processing Google search results');
   
-  // Select Google search result elements
-  const searchResults = document.querySelectorAll('div.g, div.yuRUbf, div[data-sokoban-container]');
-  console.log(`Found ${searchResults.length} Google search results`);
+  // Get all search result elements using comprehensive selectors
+  // Google frequently changes their structure, so we need to be thorough
+  const searchResults = [
+    ...document.querySelectorAll('.g:not(:has(.infodemic-indicator))'),
+    ...document.querySelectorAll('.srKDX:not(:has(.infodemic-indicator))'),
+    ...document.querySelectorAll('.xpd:not(:has(.infodemic-indicator))'),
+    ...document.querySelectorAll('div.MjjYud:not(:has(.infodemic-indicator))'),
+    ...document.querySelectorAll('.v7W49e:not(:has(.infodemic-indicator))'),
+    ...document.querySelectorAll('[data-hveid]:not(:has(.infodemic-indicator))'), 
+    ...document.querySelectorAll('.tF2Cxc:not(:has(.infodemic-indicator))'),
+    ...document.querySelectorAll('.hlcw0c:not(:has(.infodemic-indicator))'),
+    ...document.querySelectorAll('.jtfYYd:not(:has(.infodemic-indicator))')
+  ];
   
-  if (searchResults.length === 0) {
-    console.log('No Google search results found');
-    return false;
+  console.log(`Found ${searchResults.length} Google search results to process`);
+  
+  if (searchResults.length > 0) {
+    // Process in batches to avoid freezing the UI
+    processBatch(searchResults, 0, 5);
   }
   
-  searchResults.forEach(result => {
-    // Skip if already processed
-    if (result.querySelector('.infodemic-indicator')) return;
-    
-    // Find the link element
-    const linkElement = result.querySelector('a');
-    if (!linkElement) return;
-    
-    // Get URL
-    const url = linkElement.href;
-    if (!url) return;
-    
-    console.log('Processing URL:', url);
-    
-    // Check URL against bias database
-    chrome.runtime.sendMessage({ 
-      type: 'CHECK_URL', 
-      url: url 
-    }, (response) => {
-      console.log('Got bias data response:', response);
-      if (response && response.biasData) {
-        // Add indicator to search result
-        const indicator = createBiasIndicator(response.biasData);
+  // Try to directly check news elements
+  processGoogleNewsResults();
+  
+  // Set up observer for dynamic loading
+  setupMutationObserver();
+  
+  return searchResults.length > 0;
+}
+
+// Special handler for Google News results
+function processGoogleNewsResults() {
+  console.log('Looking for Google News format results');
+  
+  const newsResults = [
+    ...document.querySelectorAll('.ftSUBd:not(:has(.infodemic-indicator))'),
+    ...document.querySelectorAll('.WlydOe:not(:has(.infodemic-indicator))'),
+    ...document.querySelectorAll('.DBQmFf:not(:has(.infodemic-indicator))')
+  ];
+  
+  console.log(`Found ${newsResults.length} Google News results to process`);
+  
+  if (newsResults.length > 0) {
+    // Process each news result
+    newsResults.forEach(result => {
+      // Find the source element first
+      const sourceElement = 
+        result.querySelector('.CEMjEf') || 
+        result.querySelector('.cCCCLc') || 
+        result.querySelector('.UPmit');
         
-        // Find a good place to insert the indicator
-        const targetElement = result.querySelector('cite') || 
-                             result.querySelector('.VuuXrf') || 
-                             result.querySelector('.UPmit');
+      if (sourceElement) {
+        console.log('Processing news result with source:', sourceElement.textContent);
         
-        if (targetElement) {
-          console.log('Found target element to attach indicator');
-          targetElement.parentNode.insertBefore(indicator, targetElement.nextSibling);
+        // Check if we can find the source in our database
+        const sourceText = sourceElement.textContent.trim().toLowerCase();
+        
+        // Send the source text itself for checking
+        chrome.runtime.sendMessage({ type: 'CHECK_SOURCE', source: sourceText }, (response) => {
+          if (response && response.biasData) {
+            console.log('Got bias data for source:', response.biasData);
+            
+            // Create and insert the indicator
+            const indicator = createBiasIndicator(response.biasData);
+            sourceElement.insertAdjacentElement('afterend', indicator);
+          }
+        });
+      } else {
+        // Fall back to link-based approach
+        const linkElement = result.querySelector('a');
+        if (linkElement && linkElement.href) {
+          processSearchResult(result);
         }
       }
     });
-  });
-  
-  return true;
+  }
 }

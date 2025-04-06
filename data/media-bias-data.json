@@ -54,6 +54,7 @@
     "newsmax.com": { "bias": "right", "reliability": "medium", "name": "Newsmax" },
     "oann.com": { "bias": "right", "reliability": "low", "name": "One America News Network" },
     "townhall.com": { "bias": "right", "reliability": "medium", "name": "Townhall" },
+    "donaldjtrump.com": { "bias": "right", "reliability": "medium", "name": "Donald Trump Campaign" },
     
     "infowars.com": { "bias": "right", "reliability": "low", "name": "InfoWars" },
     "dailykos.com": { "bias": "left", "reliability": "low", "name": "Daily Kos" },

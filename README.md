@@ -95,7 +95,6 @@ Infodemic Fighter respects your privacy:
 
 Our bias and reliability ratings are based on methodologies from established organizations like AllSides, Media Bias/Fact Check, and Ad Fontes Media.
 
-
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.

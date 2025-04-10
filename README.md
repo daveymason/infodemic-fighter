@@ -6,7 +6,7 @@ A Chrome extension that helps users navigate the "infodemic" by providing visual
 
 ## The Problem: Information Overload and Bias
 
-In today's digital landscape, we face what the World Health Organization has termed an "infodemic" - an overabundance of information, both accurate and inaccurate, that makes it difficult for people to find trustworthy sources and reliable guidance when they need it.
+We face what the World Health Organization has termed an "infodemic" - an overabundance of information, both accurate and inaccurate, that makes it difficult for people to find trustworthy sources and reliable guidance when they need it.
 
 According to the WHO:
 
@@ -104,6 +104,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - World Health Organization for their research on infodemics
 - AllSides, Media Bias/Fact Check, and Ad Fontes Media for their media bias research methodologies
 - FontAwesome for their excellent icon library
-- Vue.js team for their fantastic framework
-
-

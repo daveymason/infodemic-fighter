@@ -1,9 +1,23 @@
 /* 
- * Popup styles using golden ratio (1:1.618) for proportions
- * Base unit: 10px
+ * Infodemic Fighter Popup Styles - Scientific/Professional Theme
+ * With red and blue pill color scheme
  */
 
+/* Theme variables and transitions */
 :root {
+  /* Core color scheme - scientific/professional */
+  --color-red-pill: #AA0000;
+  --color-blue-pill: #0055AA;
+  --color-purple-dark: #2D0B42;
+  
+  /* Theme variables that change based on selected theme */
+  --bg-color: #FFFFFF;  /* Default: clean white background */
+  --text-color: #333333;
+  --accent-color: var(--color-blue-pill);
+  --slider-bg: rgba(0, 0, 0, 0.1);
+  --slider-thumb: var(--color-blue-pill);
+  --border-color: #DDDDDD;
+  
   /* Golden ratio calculations */
   --base-unit: 10px;
   --phi: 1.618;
@@ -15,86 +29,80 @@
   --size-lg: calc(var(--size-md) * var(--phi));
   --size-xl: calc(var(--size-lg) * var(--phi));
   
-  /* New Primary Colors */
-  --color-primary-red: #A52A2A;
-  --color-primary-blue: #46C2FF;
-  
-  /* UI Colors */
-  --color-primary: var(--color-primary-blue);
-  --color-secondary: #e9ecef;
-  --color-accent: var(--color-primary-red);
-  --color-text: #343a40;
-  --color-text-light: #666666;
-  --color-background: #ffffff;
-  --color-border: #dddddd;
-  --color-inactive: #cccccc;
-  --color-active-indicator: var(--color-primary-blue);
-  
-  /* Bias colors - updated to match theme */
-  --color-left: var(--color-primary-blue);
-  --color-center: #82c91e;
-  --color-right: var(--color-primary-red);
-  
-  /* Reliability colors */
-  --color-high: #40c057;
-  --color-medium: #fab005;
-  --color-low: #fa5252;
-  
   /* Transition timing */
-  --transition-speed: 0.3s;
+  --transition-speed: 0.25s;
 }
 
+/* Apply clean reset */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  color: var(--color-text);
-  background-color: var(--color-background);
-  width: calc(var(--size-xl) * 2.5); /* Increased from 2 to 2.5 */
-  padding: var(--size-md);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+  width: 320px;
+  padding: 0;
   line-height: 1.5;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#app {
+  padding: 0;
 }
 
 /* Header with logo */
 .header {
   display: flex;
   align-items: center;
-  margin-bottom: var(--size-md);
+  padding: var(--size-md);
+  background: linear-gradient(to right, var(--color-red-pill), var(--color-blue-pill));
+  color: white;
+  margin-bottom: 0;
 }
 
 .logo {
-  width: var(--size-md);
-  height: var(--size-md);
-  margin-right: var(--size-sm);
+  width: 36px;
+  height: 36px;
+  margin-right: 12px;
+  /* Apply slight glow to logo */
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
 }
 
 h1 {
-  font-size: var(--size-md);
-  margin: 0;
-  color: var(--color-primary-red);
+  font-size: 1.2rem;
   font-weight: 600;
+  margin: 0;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-/* Tab Navigation */
+/* Tab Navigation - Scientific Style */
 .tabs {
   display: flex;
-  margin-bottom: var(--size-md);
-  border-bottom: 1px solid var(--color-border);
+  background-color: rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .tabs button {
+  flex: 1;
   background: none;
   border: none;
-  padding: var(--size-xs) var(--size-md);
+  color: var(--text-color);
+  padding: var(--size-sm) 0;
   cursor: pointer;
-  font-size: var(--size-sm);
+  font-size: 14px;
+  font-weight: 500;
   opacity: 0.7;
-  transition: opacity var(--transition-speed) ease, 
-              border-bottom var(--transition-speed) ease;
+  transition: all var(--transition-speed) ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .tabs button:hover {
@@ -103,17 +111,30 @@ h1 {
 
 .tabs button.active {
   opacity: 1;
-  border-bottom: 2px solid var(--color-active-indicator);
-  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Active indicator - pill shaped */
+.tabs button.active:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 25%;
+  width: 50%;
+  height: 3px;
+  background-color: var(--accent-color);
+  border-radius: 3px 3px 0 0;
 }
 
 .icon {
-  margin-right: calc(var(--size-xs) * 0.5);
+  margin-right: 6px;
+  font-size: 14px;
 }
 
 /* Tab Content */
 .tab-content {
   display: none;
+  padding: var(--size-md);
 }
 
 .tab-content.active {
@@ -122,24 +143,24 @@ h1 {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(var(--size-xs)); }
+  from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Toggle Switch Styling */
+/* Toggle Switch Styling - Made to look like pills */
 .toggle-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--size-md);
-  font-size: var(--size-sm);
+  margin-bottom: 16px;
+  font-size: 14px;
 }
 
 .toggle {
   position: relative;
   display: inline-block;
-  width: calc(var(--size-md) * 1.5);
-  height: var(--size-md);
+  width: 46px;
+  height: 24px;
 }
 
 .toggle input {
@@ -148,6 +169,7 @@ h1 {
   height: 0;
 }
 
+/* Pill-shaped toggle switch */
 .slider {
   position: absolute;
   cursor: pointer;
@@ -155,60 +177,99 @@ h1 {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--color-inactive);
-  border-radius: var(--size-md);
-  transition: background-color var(--transition-speed) ease;
+  background-color: var(--slider-bg);
+  border-radius: 24px;
+  transition: background-color var(--transition-speed);
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: calc(var(--size-md) - var(--size-xs));
-  width: calc(var(--size-md) - var(--size-xs));
-  left: calc(var(--size-xs) * 0.5);
-  bottom: calc(var(--size-xs) * 0.5);
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
   background-color: white;
   border-radius: 50%;
-  transition: transform var(--transition-speed) ease;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  transition: transform var(--transition-speed);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 input:checked + .slider {
-  background-color: var(--color-primary);
+  background-color: var(--accent-color);
 }
 
 input:focus + .slider {
-  box-shadow: 0 0 1px var(--color-primary);
+  box-shadow: 0 0 3px var(--accent-color);
 }
 
 input:checked + .slider:before {
-  transform: translateX(calc(var(--size-md) * 0.5));
+  transform: translateX(22px);
 }
 
-/* Selection Controls */
-.color-selector {
+/* Theme selector - Pill style radio buttons */
+.theme-selector {
   margin-top: var(--size-md);
 }
 
-.color-selector label {
+.theme-selector label {
   display: block;
   margin-bottom: var(--size-xs);
-  font-size: var(--size-sm);
+  font-size: 14px;
+  font-weight: 500;
 }
 
-select {
-  width: 100%;
-  padding: var(--size-xs);
-  border-radius: calc(var(--size-xs) / 2);
-  border: 1px solid var(--color-border);
-  font-size: var(--size-sm);
-  background-color: var(--color-background);
-  transition: border-color var(--transition-speed) ease;
+.theme-options {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
 }
 
-select:focus {
-  outline: none;
-  border-color: var(--color-primary);
+.theme-option {
+  flex: 1;
+  position: relative;
+}
+
+.theme-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.theme-option label {
+  display: block;
+  text-align: center;
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  font-size: 13px;
+  font-weight: normal;
+  margin: 0;
+}
+
+.theme-option.red label {
+  background-color: #ffeeee;
+  color: var(--color-red-pill);
+}
+
+.theme-option.blue label {
+  background-color: #eef5ff;
+  color: var(--color-blue-pill);
+}
+
+.theme-option.purple label {
+  background-color: #f5eeff;
+  color: var(--color-purple-dark);
+}
+
+.theme-option input[type="radio"]:checked + label {
+  border-color: currentColor;
+  font-weight: 500;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 /* About Tab Styling */
@@ -216,38 +277,83 @@ select:focus {
   text-align: center;
 }
 
-#content-about img {
-  width: calc(var(--size-lg) * 1.25);
-  height: calc(var(--size-lg) * 1.25);
+#content-about .logo-container {
   margin: 0 auto var(--size-md);
-  display: block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#content-about .logo-container img {
+  width: 80px;
+  height: 80px;
 }
 
 #content-about p {
-  font-size: var(--size-sm);
-  line-height: calc(var(--size-sm) * var(--phi));
+  font-size: 14px;
+  line-height: 1.6;
   margin-bottom: var(--size-md);
   text-align: left;
+  color: var(--text-color);
+}
+
+#content-about .version {
+  display: inline-block;
+  padding: 4px 10px;
+  background-color: rgba(0,0,0,0.05);
+  border-radius: 12px;
+  font-size: 12px;
+  margin-top: var(--size-sm);
 }
 
 /* Footer */
 .footer {
-  margin-top: var(--size-lg);
+  margin-top: 0;
   text-align: center;
-  font-size: var(--size-xs);
-  color: var(--color-text-light);
-  padding-top: var(--size-sm);
-  border-top: 1px solid var(--color-border);
+  font-size: 11px;
+  color: #888;
+  padding: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
-/* Responsive adjustments */
-@media (max-width: 800px) { 
-  body {
-    width: 400px;
-    padding: var(--size-sm);
-  }
-  
-  .tabs button {
-    padding: var(--size-xs) var(--size-sm);
-  }
+/* Theme Implementations */
+body.theme-red {
+  --accent-color: var(--color-red-pill);
+  --slider-thumb: var(--color-red-pill);
+}
+
+body.theme-blue {
+  --accent-color: var(--color-blue-pill);
+  --slider-thumb: var(--color-blue-pill);
+}
+
+body.theme-purple {
+  --bg-color: var(--color-purple-dark);
+  --text-color: #f0f0f0;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --accent-color: #9966CC;
+  --slider-bg: rgba(255, 255, 255, 0.2);
+}
+
+/* Preserve tooltip styles */
+.infodemic-tooltip {
+  position: fixed !important;
+  z-index: 2147483647 !important; /* Maximum z-index value */
+  visibility: hidden;
+  background-color: white;
+  color: black;
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  width: 220px;
+  font-size: 12px;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  opacity: 0;
+}
+
+.infodemic-indicator:hover .infodemic-tooltip {
+  visibility: visible !important;
+  opacity: 1 !important;
 }

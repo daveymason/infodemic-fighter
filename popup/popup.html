@@ -6,17 +6,17 @@
   <title>Infodemic Fighter</title>
   <link rel="stylesheet" href="../assets/styles/popup.css">
 </head>
-<body>
+<body class="theme-purple">
   <div id="app">
-    <div class="header">
-      <img src="../assets/icons/icon48.png" alt="Infodemic Fighter Logo" class="logo">
+    <div id="header" class="header">
+      <img src="../assets/icons/logo.png" alt="Infodemic Fighter Logo" class="logo">
       <h1>Infodemic Fighter</h1>
     </div>
     
-    <!-- Tabs Navigation with Unicode symbols -->
+    <!-- Tabs Navigation with Emojis instead of FontAwesome -->
     <div class="tabs">
-      <button id="tab-settings" class="active"><span class="icon">⚙️</span> Settings</button>
-      <button id="tab-about"><span class="icon">ℹ️</span> About</button>
+      <button id="tab-settings" class="active">⚙️ Settings</button>
+      <button id="tab-about">ℹ️ About</button>
     </div>
     
     <!-- Settings Tab -->
@@ -45,20 +45,30 @@
         </label>
       </div>
       
-      <div class="color-selector">
-        <label for="colorScheme">Color scheme:</label>
-        <select id="colorScheme">
-          <option value="default">Default colors</option>
-          <option value="colorblind">Colorblind Friendly</option>
-          <option value="monochrome">Monochrome</option>
-        </select>
+      <!-- Theme selector with pill options -->
+      <div class="theme-selector">
+        <label>Theme:</label>
+        <div class="theme-options">
+          <div class="theme-option red">
+            <input type="radio" name="theme" id="theme-red" value="red">
+            <label for="theme-red">Red Pill</label>
+          </div>
+          <div class="theme-option blue">
+            <input type="radio" name="theme" id="theme-blue" value="blue">
+            <label for="theme-blue">Blue Pill</label>
+          </div>
+          <div class="theme-option purple">
+            <input type="radio" name="theme" id="theme-purple" value="purple" checked>
+            <label for="theme-purple">Pur Pill</label>
+          </div>
+        </div>
       </div>
     </div>
     
-    <!-- About Tab -->
+    <!-- About Tab (removed duplicate logo) -->
     <div id="content-about" class="tab-content">
       <p>Infodemic Fighter helps you navigate the information landscape by providing visual indicators of political bias and reliability for search results.</p>
-      <p>Version 0.1.0</p>
+      <p>Take the red pill or the blue pill - either way, you'll see the truth behind your search results!</p>
     </div>
     
     <div class="footer">

@@ -57,10 +57,7 @@
   display: inline-flex;
   align-items: center;
   margin-left: var(--size-sm);
-  font-size: var(--size-sm);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  font-size: 16px;
   transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 5; /* Ensure visibility above search result content */
@@ -70,13 +67,20 @@
 }
 
 .infodemic-indicator:hover {
-  box-shadow: var(--shadow-md);
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
   transform: translateY(-1px);
 }
 
 .infodemic-indicator:active {
   transform: translateY(0);
   box-shadow: var(--shadow-sm);
+}
+
+.infodemic-indicator:hover .bias-indicator,
+.infodemic-indicator:hover .reliability-indicator {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
 }
 
 /* Bias pill with enhanced contrast and legibility */
@@ -169,31 +173,29 @@
 
 /* Enhanced tooltip styles for better readability */
 .infodemic-tooltip {
-  position: relative;
-}
-
-.infodemic-tooltip .tooltip-content {
-  visibility: hidden;
-  width: calc(var(--size-lg) * 1.75);
-  background-color: var(--color-text-dark);
-  color: white;
-  text-align: left;
-  border-radius: var(--radius-sm);
-  padding: var(--size-sm);
   position: absolute;
-  z-index: 1000;
   bottom: 125%;
   left: 50%;
   transform: translateX(-50%) translateY(var(--size-xs));
-  opacity: 0;
-  transition: opacity var(--transition-normal), transform var(--transition-normal);
-  font-size: calc(var(--size-sm) * 0.9);
-  pointer-events: none;
+  background-color: var(--color-text-dark);
+  color: white;
+  border-radius: var(--radius-sm);
+  padding: var(--size-sm);
   box-shadow: var(--shadow-lg);
-  line-height: 1.4;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 2147483647;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity var(--transition-normal), visibility var(--transition-normal);
 }
 
-.infodemic-tooltip .tooltip-content::after {
+.infodemic-indicator:hover .infodemic-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.infodemic-tooltip::after {
   content: "";
   position: absolute;
   top: 100%;
@@ -202,12 +204,8 @@
   border-width: var(--size-xs);
   border-style: solid;
   border-color: var(--color-text-dark) transparent transparent transparent;
-}
+  z-index: 2147483647;
 
-.infodemic-tooltip:hover .tooltip-content {
-  visibility: visible;
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
 }
 
 /* Source label in tooltip */
@@ -335,7 +333,7 @@
     padding: calc(var(--size-xs) * 0.5) calc(var(--size-xs) * 0.75);
   }
   
-  .infodemic-tooltip .tooltip-content {
+  .infodemic-tooltip {
     width: calc(var(--size-lg) * 1.25);
     padding: var(--size-xs);
     font-size: var(--size-xs);

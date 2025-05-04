@@ -57,7 +57,31 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 // Enhanced function to create a more visually appealing popup
-function createEnhancedBiasPopup(biasData) {
+function createEnhancedBiasPopup(biasData, settings) {
+  // Default to 'purple' theme if settings are not available
+  const theme = settings?.theme || 'purple';
+  
+  // Get theme-specific colors
+  let headerBg, textColor, bgColor, borderColor;
+  
+  // Apply theme colors based on user preference
+  if (theme === 'red') {
+    headerBg = 'linear-gradient(to right, #AA0000, #772222)';
+    textColor = '#333333';
+    bgColor = '#FFFFFF';
+    borderColor = '#DDDDDD';
+  } else if (theme === 'blue') {
+    headerBg = 'linear-gradient(to right, #2244BB, #0055AA)';
+    textColor = '#333333';
+    bgColor = '#FFFFFF';
+    borderColor = '#DDDDDD';
+  } else if (theme === 'purple') {
+    headerBg = 'linear-gradient(to right, #441166, #662288)';
+    textColor = '#f0f0f0';
+    bgColor = '#2D0B42';
+    borderColor = 'rgba(255, 255, 255, 0.1)';
+  }
+  
   // Get bias icon
   let biasIcon, reliabilityIcon;
   
@@ -95,7 +119,7 @@ function createEnhancedBiasPopup(biasData) {
       reliabilityIcon = '?';
   }
   
-  // Generate CSS styles for the popup
+  // Generate CSS styles for the popup with theme specific colors
   const styles = `
     #infodemic-container {
       position: fixed;
@@ -106,9 +130,10 @@ function createEnhancedBiasPopup(biasData) {
     }
     
     .infodemic-popup {
-      background: white;
+      background: ${bgColor};
+      color: ${textColor};
       border-radius: 8px;
-      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.3);
       width: 320px;
       font-family: 'Segoe UI', Arial, sans-serif;
       overflow: hidden;
@@ -121,7 +146,7 @@ function createEnhancedBiasPopup(biasData) {
     }
     
     .infodemic-header {
-      background: #4285F4;
+      background: ${headerBg};
       color: white;
       padding: 12px 16px;
       display: flex;
@@ -155,6 +180,7 @@ function createEnhancedBiasPopup(biasData) {
     
     .infodemic-content {
       padding: 16px;
+      border-bottom: 1px solid ${borderColor};
     }
     
     .infodemic-source-name {
@@ -174,13 +200,13 @@ function createEnhancedBiasPopup(biasData) {
       flex: 1;
       padding: 8px;
       border-radius: 8px;
-      background-color: #f5f5f5;
+      background-color: ${theme === 'purple' ? 'rgba(255, 255, 255, 0.1)' : '#f5f5f5'};
       margin: 0 4px;
     }
     
     .infodemic-metric-title {
       font-size: 12px;
-      color: #666;
+      color: ${theme === 'purple' ? '#ccc' : '#666'};
       margin-bottom: 4px;
     }
     
@@ -199,9 +225,9 @@ function createEnhancedBiasPopup(biasData) {
     
     .infodemic-footer {
       padding: 12px 16px;
-      background: #f5f5f5;
+      background: ${theme === 'purple' ? 'rgba(0, 0, 0, 0.2)' : '#f5f5f5'};
       font-size: 12px;
-      color: #666;
+      color: ${theme === 'purple' ? '#aaa' : '#666'};
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -234,7 +260,7 @@ function createEnhancedBiasPopup(biasData) {
       <div class="infodemic-popup" id="infodemic-popup">
         <div class="infodemic-header">
           <div class="infodemic-title">
-            <span class="infodemic-title-icon">ℹ️</span>
+            <span class="infodemic-title-icon">🔍</span>
             Infodemic Fighter Analysis
           </div>
           <button class="infodemic-close" id="infodemic-close">✕</button>
@@ -273,13 +299,15 @@ function createEnhancedBiasPopup(biasData) {
 
 // Update the showBiasPopup function to use the enhanced popup
 function showBiasPopup(tabId, frameId, url, biasData) {
-  const popupHTML = createEnhancedBiasPopup(biasData);
-  
-  // Inject the popup into the page
-  chrome.scripting.executeScript({
-    target: { tabId: tabId, frameIds: [frameId] },
-    func: injectEnhancedPopup,
-    args: [popupHTML],
+  chrome.storage.local.get(['settings'], (result) => {
+    const popupHTML = createEnhancedBiasPopup(biasData, result.settings);
+    
+    // Inject the popup into the page
+    chrome.scripting.executeScript({
+      target: { tabId: tabId, frameIds: [frameId] },
+      func: injectEnhancedPopup,
+      args: [popupHTML],
+    });
   });
 }
 

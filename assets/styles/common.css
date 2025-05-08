@@ -1,0 +1,443 @@
+/* 
+ * Common styles for Infodemic Fighter extension
+ * Scientific/Academic Design System based on cognitive principles
+ */
+
+:root {
+  /* Scientific proportions based on golden ratio */
+  --base-unit: 8px;
+  --phi: 1.618;
+  
+  /* Derived sizes - mathematical precision */
+  --size-xs: calc(var(--base-unit));
+  --size-sm: calc(var(--base-unit) * var(--phi));
+  --size-md: calc(var(--size-sm) * var(--phi));
+  --size-lg: calc(var(--size-md) * var(--phi));
+  --size-xl: calc(var(--size-lg) * var(--phi));
+  
+  /* Scientific color palette - with RGB values for transparency */
+  --color-red-pill: #A52A2A;       /* Deep scientific red */
+  --color-red-pill-rgb: 165, 42, 42; /* RGB values for the same red */
+  --color-blue-pill: #46C2FF;      /* Academic/research blue */
+  --color-blue-pill-rgb: 70, 194, 255; /* RGB values for the same blue */
+  
+  /* Neutral tones for academic visual hierarchy */
+  --neutral-900: #212529;
+  --neutral-800: #343a40;
+  --neutral-700: #495057;
+  --neutral-600: #6c757d;
+  --neutral-500: #adb5bd;
+  --neutral-400: #ced4da;
+  --neutral-300: #dee2e6;
+  --neutral-200: #e9ecef;
+  --neutral-100: #f8f9fa;
+  
+  /* Data visualization color scale - for bias spectrum */
+  --data-left: var(--color-blue-pill);
+  --data-right: var(--color-red-pill);
+  --data-center: #82c91e;
+  
+  /* For content.css consistency */
+  --color-left: var(--color-blue-pill);
+  --color-lean-left: #78D1FF;
+  --color-center: var(--data-center);
+  --color-lean-right: #C76363;
+  --color-right: var(--color-red-pill);
+  --color-text-light: white;
+  --color-text-dark: var(--neutral-900);
+  
+  /* Reliability colors - based on scientific precision */
+  --reliability-high: #40c057;
+  --reliability-medium: #fab005;
+  --reliability-low: #fa5252;
+  
+  /* For content.css consistency */
+  --color-high: var(--reliability-high);
+  --color-medium: var(--reliability-medium);
+  --color-low: var(--reliability-low);
+  
+  /* Animation speeds - subtle, precise movements */
+  --transition-fast: 150ms;
+  --transition-normal: 250ms;
+  --transition-slow: 350ms;
+  
+  /* Animation curves for cognitive response */
+  --ease-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-out: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
+  
+  /* Scientific UI effects */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 14px 28px rgba(0, 0, 0, 0.15), 0 10px 10px rgba(0, 0, 0, 0.08);
+  
+  --radius-sm: var(--size-xs);
+  --radius-md: calc(var(--size-xs) * 1.5);
+  --radius-lg: calc(var(--size-sm) * 0.75);
+  --radius-pill: 9999px;
+  
+  /* Typography - academic journal inspired */
+  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Helvetica Neue', Arial, sans-serif;
+  --font-family-heading: var(--font-family-base);
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-base: 1.5;
+  --line-height-tight: 1.2;
+  --letter-spacing-tight: -0.01em;
+  --letter-spacing-wide: 0.02em;
+  
+  /* Light mode (default) */
+  --bg-surface: var(--neutral-100);
+  --bg-elevated: white;
+  --text-primary: var(--neutral-900);
+  --text-secondary: var(--neutral-700);
+  --text-tertiary: var(--neutral-600);
+  --border-color: var(--neutral-300);
+  --accent-primary: var(--color-blue-pill);
+  --accent-secondary: var(--color-red-pill);
+  
+  /* Tooltip and indicator colors - light mode */
+  --tooltip-bg: var(--neutral-800);
+  --tooltip-text: var(--neutral-100);
+  --tooltip-arrow: var(--tooltip-bg);
+  
+  /* UI Component colors - light mode */
+  --slider-bg: var(--neutral-300);
+  --slider-thumb: var(--accent-primary);
+}
+
+/* Dark mode */
+.dark-mode {
+  --bg-surface: var(--neutral-900);
+  --bg-elevated: var(--neutral-800);
+  --text-primary: var(--neutral-100);
+  --text-secondary: var(--neutral-300);
+  --text-tertiary: var(--neutral-400);
+  --border-color: var(--neutral-700);
+  
+  /* Adjust accent colors slightly for better contrast in dark mode */
+  --accent-primary: #56C7FF; /* Slightly brighter blue */
+  --accent-secondary: #B54141; /* Slightly brighter red */
+  
+  /* Tooltip and indicator colors - dark mode */
+  --tooltip-bg: var(--neutral-200);
+  --tooltip-text: var(--neutral-900);
+  --tooltip-arrow: var(--tooltip-bg);
+  
+  /* UI Component colors - dark mode */
+  --slider-bg: var(--neutral-700);
+  --slider-thumb: var(--accent-primary);
+}
+
+/* Common tooltip styles - scientific precision */
+.infodemic-tooltip {
+  visibility: hidden;
+  position: absolute;
+  z-index: 100;
+  width: 240px;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background-color: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  text-align: left;
+  border-radius: var(--radius-md);
+  padding: var(--size-sm);
+  box-shadow: var(--shadow-md);
+  font-size: 14px;
+  opacity: 0;
+  transition: all var(--transition-normal) var(--ease-out);
+  pointer-events: none;
+  border: 1px solid var(--border-color);
+}
+
+.infodemic-tooltip::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent var(--tooltip-arrow) transparent;
+}
+
+/* Bias visualization colors */
+.bias-left {
+  background-color: var(--data-left);
+  color: white;
+}
+
+.bias-lean-left {
+  background-color: var(--color-lean-left);
+  color: var(--neutral-900);
+}
+
+.bias-center {
+  background-color: var(--data-center);
+  color: var(--neutral-900);
+}
+
+.bias-lean-right {
+  background-color: var(--color-lean-right);
+  color: white;
+}
+
+.bias-right {
+  background-color: var(--data-right);
+  color: white;
+}
+
+.bias-unknown {
+  background-color: var(--neutral-500);
+  color: white;
+}
+
+/* Reliability indicator colors */
+.reliability-high {
+  color: var(--reliability-high);
+}
+
+.reliability-medium {
+  color: var(--reliability-medium);
+}
+
+.reliability-low {
+  color: var(--reliability-low);
+}
+
+.reliability-unknown {
+  color: var(--neutral-500);
+}
+
+/* Scientific animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseAttention {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes infodemicFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-4px); }
+  60% { transform: translateY(-2px); }
+}
+
+/* Scientific & academic icons instead of emojis */
+.icon-microscope::before,
+.icon-lab::before,
+.icon-data::before,
+.icon-analysis::before {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.icon-microscope::before {
+  background-image: url('../icons/microscope.svg');
+}
+
+.icon-lab::before {
+  background-image: url('../icons/lab.svg');
+}
+
+.icon-data::before {
+  background-image: url('../icons/data.svg');
+}
+
+.icon-analysis::before {
+  background-image: url('../icons/analysis.svg');
+}
+
+/* Shared emoji styling */
+.emoji-icon {
+  margin-right: 5px;
+  display: inline-block;
+  transform-origin: center;
+  transition: transform var(--transition-fast) var(--ease-bounce);
+}
+
+.emoji-icon:hover {
+  transform: scale(1.2);
+}
+
+/* Common badge styles */
+.infodemic-badge {
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  color: white;
+  display: inline-block;
+  transition: all var(--transition-fast) var(--ease-out);
+}
+
+.infodemic-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Accessibility focus styles */
+:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Ensure interactive elements have proper hover states */
+button,
+.interactive {
+  transition: all var(--transition-fast) var(--ease-out);
+  cursor: pointer;
+}
+
+button:hover,
+.interactive:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+button:active,
+.interactive:active {
+  filter: brightness(0.95);
+  transform: translateY(0);
+}
+
+/* Common section styling */
+.infodemic-section {
+  margin-bottom: var(--size-md);
+  padding: var(--size-sm);
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-normal) var(--ease-out);
+}
+
+.infodemic-section:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.section-title {
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--size-xs);
+  font-size: 15px;
+  color: var(--text-primary);
+  position: relative;
+  padding-left: var(--size-md);
+}
+
+.section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--size-sm);
+  height: var(--size-xs);
+  background-color: var(--accent-primary);
+  border-radius: var(--radius-sm);
+}
+
+.section-description {
+  font-size: 14px;
+  line-height: 1.4;
+  margin-top: var(--size-xs);
+  color: var(--text-secondary);
+}
+
+/* Ensure proper contrast for all text */
+small, 
+.text-small {
+  font-size: 0.875em;
+}
+
+/* Common cognitive insight styling */
+.cognitive-insight {
+  background-color: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  padding: var(--size-md);
+  margin-top: var(--size-md);
+  line-height: 1.4;
+  font-size: 14px;
+  border-left: 3px solid var(--accent-primary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-normal) var(--ease-out);
+}
+
+.cognitive-insight:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.cognitive-insight strong {
+  color: var(--text-primary);
+}
+
+/* Common header styles */
+.infodemic-header {
+  background: linear-gradient(135deg, var(--color-red-pill), var(--color-blue-pill));
+  color: white;
+  padding: var(--size-sm) var(--size-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.infodemic-title {
+  font-size: 16px;
+  font-weight: var(--font-weight-semibold);
+  display: flex;
+  align-items: center;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Common footer styles */
+.infodemic-footer {
+  padding: var(--size-sm) var(--size-md);
+  background-color: var(--bg-surface);
+  font-size: 12px;
+  color: var(--text-tertiary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+} 

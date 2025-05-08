@@ -24,7 +24,7 @@ chrome.runtime.onInstalled.addListener(() => {
         enabled: true,
         showBiasIndicator: true,
         showReliabilityIndicator: true,
-        colorScheme: 'default'
+        darkMode: false
       };
       
       chrome.storage.local.set({ settings: defaultSettings });
@@ -34,110 +34,1079 @@ chrome.runtime.onInstalled.addListener(() => {
     }
   });
 
-  // Create context menu item for links
-  chrome.contextMenus.create({
-    id: "checkBias",
-    title: "Check for Media Bias",
-    contexts: ["link"]
+  // Clear existing context menu items to avoid duplicates
+  chrome.contextMenus.removeAll(() => {
+    // Create parent menu for Infodemic Fighter
+    chrome.contextMenus.create({
+      id: "infodemicFighterMenu",
+      title: "Infodemic Fighter",
+      contexts: ["link"]
+    });
+    
+    // Simplified menu options - only 2 distinct actions
+    chrome.contextMenus.create({
+      id: "visualizeBias",
+      parentId: "infodemicFighterMenu",
+      title: "Visualize Bias",
+      contexts: ["link"]
+    });
+    
+    chrome.contextMenus.create({
+      id: "findAlternativeSources",
+      parentId: "infodemicFighterMenu",
+      title: "Find Alternative Sources",
+      contexts: ["link"]
+    });
   });
 });
 
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === "checkBias") {
-    const url = info.linkUrl;
-    console.log("Context menu: Checking URL for bias:", url);
-    
-    // Check the URL for bias
-    const biasData = checkUrlBiasSync(url);
-    
-    // Show the results in a popup
-    showBiasPopup(tab.id, info.frameId, info.linkUrl, biasData);
+  // Skip processing for chrome:// URLs which cannot receive messages
+  if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://') || tab.url.includes('chrome.google.com/webstore')) {
+    console.log("Cannot process context menu on Chrome internal pages");
+    return;
+  }
+  
+  const url = info.linkUrl;
+  console.log("Context menu: Selected action:", info.menuItemId, "for URL:", url);
+  
+  // Check the URL for bias data first
+  const biasData = checkUrlBiasSync(url);
+  
+  // Choose action based on menu selection
+  try {
+    switch(info.menuItemId) {
+      case "visualizeBias":
+        showCombinedBiasVisualization(tab.id, url, biasData);
+        break;
+      case "findAlternativeSources":
+        showAlternativeSources(tab.id, url, biasData);
+        break;
+    }
+  } catch (error) {
+    console.error("Error processing context menu action:", error);
   }
 });
 
-// Enhanced function to create a more visually appealing popup
-function createEnhancedBiasPopup(biasData, settings) {
-  // Default to 'purple' theme if settings are not available
-  const theme = settings?.theme || 'purple';
+// Function to show the new combined bias visualization
+function showCombinedBiasVisualization(tabId, url, biasData) {
+  chrome.storage.local.get(['settings'], (result) => {
+    const popupHTML = createCombinedBiasVisualization(biasData, result.settings);
+    sendPopupToContentScript(tabId, popupHTML);
+  });
+}
+
+// Create combined bias visualization (merging source analysis and data visualization)
+function createCombinedBiasVisualization(biasData, settings) {
+  const theme = settings?.darkMode ? 'dark-mode' : 'light-mode';
+  const styles = getPopupStyles(theme) + `
+    .combined-popup {
+      width: 600px !important;
+      max-width: 90vw;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    
+    .full-width-section {
+      grid-column: 1 / -1;
+    }
+    
+    .bias-spectrum-container {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    
+    .bias-spectrum {
+      position: relative;
+      height: 40px;
+      background: linear-gradient(to right, var(--color-red-pill), #C76363, var(--data-center), #78D1FF, var(--color-blue-pill));
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    
+    .spectrum-marker {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border: 2px solid black;
+      border-radius: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      z-index: 2;
+    }
+    
+    .spectrum-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    .example-sources {
+      display: flex;
+      justify-content: space-between;
+      margin: 15px 0;
+      position: relative;
+      height: 24px;
+    }
+    
+    .example-source {
+      position: absolute;
+      font-size: 11px;
+      transform: translateX(-50%);
+      color: var(--text-secondary);
+    }
+    
+    .history-items {
+      margin-top: 15px;
+    }
+    
+    .history-item {
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      background-color: var(--bg-elevated);
+      border: 1px solid var(--border-color);
+      transition: transform var(--transition-fast);
+    }
+    
+    .history-item:hover {
+      transform: translateY(-2px);
+    }
+    
+    .history-type {
+      font-weight: var(--font-weight-medium);
+      margin-bottom: 4px;
+    }
+    
+    .history-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .infodemic-bias-meter {
+      margin: 16px 0;
+    }
+    
+    .infodemic-bias-scale {
+      position: relative;
+      height: 8px;
+      background: linear-gradient(to right, var(--color-red-pill), #C76363, var(--data-center), #78D1FF, var(--color-blue-pill));
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    
+    .scale-marker {
+      position: absolute;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    .scale-marker.left {
+      left: 0;
+    }
+    
+    .scale-marker.center {
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    .scale-marker.right {
+      right: 0;
+    }
+    
+    .scale-position {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: white;
+      border-radius: 50%;
+      border: 2px solid var(--text-primary);
+      top: 50%;
+      transform: translate(-50%, -50%);
+      transition: left 0.3s ease-out;
+    }
+    
+    .bias-label {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    
+    .bias-label-text {
+      font-size: 15px;
+      font-weight: 500;
+    }
+    
+    .cognitive-insight {
+      background-color: var(--bg-elevated);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 20px;
+      line-height: 1.4;
+      font-size: 14px;
+      border-left: 3px solid var(--accent-primary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .cognitive-insight strong {
+      color: var(--text-primary);
+    }
+    
+    .spectrum-endpoints {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    
+    .endpoint-left {
+      color: var(--color-red-pill);
+      font-weight: 500;
+    }
+    
+    .endpoint-right {
+      color: var(--color-blue-pill);
+      font-weight: 500;
+    }
+    
+    .reliability-score {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    
+    .reliability-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    
+    .reliability-dot.filled {
+      background-color: currentColor;
+    }
+    
+    .reliability-dot.empty {
+      border: 2px solid currentColor;
+      background-color: transparent;
+    }
+    
+    .emoji-icon {
+      margin-right: 5px;
+    }
+  `;
   
-  // Get theme-specific colors
-  let headerBg, textColor, bgColor, borderColor;
-  
-  // Apply theme colors based on user preference
-  if (theme === 'red') {
-    headerBg = 'linear-gradient(to right, #AA0000, #772222)';
-    textColor = '#333333';
-    bgColor = '#FFFFFF';
-    borderColor = '#DDDDDD';
-  } else if (theme === 'blue') {
-    headerBg = 'linear-gradient(to right, #2244BB, #0055AA)';
-    textColor = '#333333';
-    bgColor = '#FFFFFF';
-    borderColor = '#DDDDDD';
-  } else if (theme === 'purple') {
-    headerBg = 'linear-gradient(to right, #441166, #662288)';
-    textColor = '#f0f0f0';
-    bgColor = '#2D0B42';
-    borderColor = 'rgba(255, 255, 255, 0.1)';
+  // Calculate position based on bias - inverted for left-right political spectrum
+  // In the US, red is typically Republican/right and blue is Democrat/left
+  // So we need to invert our position calculation
+  let position;
+  switch(biasData.bias) {
+    case 'left': position = 90; break;
+    case 'lean-left': position = 70; break;
+    case 'center': position = 50; break;
+    case 'lean-right': position = 30; break;
+    case 'right': position = 10; break;
+    default: position = 50;
   }
   
-  // Get bias icon
-  let biasIcon, reliabilityIcon;
+  // Example sources across the spectrum for comparison
+  const examples = [
+    { name: "Fox News", bias: "right", position: 10 },
+    { name: "WSJ", bias: "lean-right", position: 30 },
+    { name: "Reuters", bias: "center", position: 50 },
+    { name: "NYT", bias: "lean-left", position: 70 },
+    { name: "MSNBC", bias: "left", position: 90 }
+  ];
   
+  // Generate example HTML
+  let examplesHTML = '';
+  examples.forEach(example => {
+    examplesHTML += `
+      <div class="example-source" style="left: ${example.position}%;">
+        ${example.name}
+      </div>
+    `;
+  });
+  
+  // Get bias description
+  let biasDescription = '';
   switch(biasData.bias) {
     case 'left':
-      biasIcon = '&#8592;'; // Left arrow
+      biasDescription = 'This source typically presents news from a progressive/liberal perspective. It may prioritize topics like social justice, climate change, and economic equality.';
       break;
     case 'lean-left':
-      biasIcon = '&#8592;&#8592;'; // Double left arrow
+      biasDescription = 'This source has a moderate liberal bias in reporting and topic selection, though may attempt to follow traditional journalistic standards.';
       break;
     case 'center':
-      biasIcon = '&#8596;'; // Left-right arrow
+      biasDescription = 'This source aims to present balanced coverage with minimal bias in either direction. It likely covers a wide range of perspectives.';
       break;
     case 'lean-right':
-      biasIcon = '&#8594;&#8594;'; // Double right arrow
+      biasDescription = 'This source has a moderate conservative bias in reporting and topic selection, though may attempt to follow traditional journalistic standards.';
       break;
     case 'right':
-      biasIcon = '&#8594;'; // Right arrow
+      biasDescription = 'This source typically presents news from a conservative perspective. It may prioritize topics like traditional values, national security, and free markets.';
       break;
     default:
-      biasIcon = '?';
+      biasDescription = 'We have limited information about this source\'s political leaning. Consider researching the publisher\'s background.';
   }
+  
+  // Get reliability indicators
+  let reliabilityHTML = '';
+  let reliabilityDescription = '';
+  
+  const reliabilityColor = getReliabilityColor(biasData.reliability);
   
   switch(biasData.reliability) {
     case 'high':
-      reliabilityIcon = '&#9733;&#9733;&#9733;'; // Three stars
+      reliabilityHTML = `
+        <div class="reliability-dot filled" style="color: ${reliabilityColor}"></div>
+        <div class="reliability-dot filled" style="color: ${reliabilityColor}"></div>
+        <div class="reliability-dot filled" style="color: ${reliabilityColor}"></div>
+      `;
+      reliabilityDescription = 'This source demonstrates strong factual reporting, proper sourcing, and minimal failed fact checks.';
       break;
     case 'medium':
-      reliabilityIcon = '&#9733;&#9733;&#9734;'; // Two stars
+      reliabilityHTML = `
+        <div class="reliability-dot filled" style="color: ${reliabilityColor}"></div>
+        <div class="reliability-dot filled" style="color: ${reliabilityColor}"></div>
+        <div class="reliability-dot empty" style="color: ${reliabilityColor}"></div>
+      `;
+      reliabilityDescription = 'This source generally reports factually but may occasionally publish misleading or unverified claims.';
       break;
     case 'low':
-      reliabilityIcon = '&#9733;&#9734;&#9734;'; // One star
+      reliabilityHTML = `
+        <div class="reliability-dot filled" style="color: ${reliabilityColor}"></div>
+        <div class="reliability-dot empty" style="color: ${reliabilityColor}"></div>
+        <div class="reliability-dot empty" style="color: ${reliabilityColor}"></div>
+      `;
+      reliabilityDescription = 'This source has a history of publishing misleading, unverified, or false information.';
       break;
     default:
-      reliabilityIcon = '?';
+      reliabilityHTML = `
+        <div class="reliability-dot empty" style="color: ${reliabilityColor}"></div>
+        <div class="reliability-dot empty" style="color: ${reliabilityColor}"></div>
+        <div class="reliability-dot empty" style="color: ${reliabilityColor}"></div>
+      `;
+      reliabilityDescription = 'Limited information available about this source\'s reliability.';
   }
   
-  // Generate CSS styles for the popup with theme specific colors
-  const styles = `
+  // Generate factual reporting history items
+  let historyItems = '';
+  
+  switch(biasData.reliability) {
+    case 'high':
+      historyItems = `
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-high);">✓ Strong Sourcing</div>
+          <div class="history-text">Consistently cites primary sources and provides links to raw data.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-high);">✓ Fact Checking</div>
+          <div class="history-text">Employs dedicated fact-checkers and verifies information before publishing.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-high);">✓ Correction Policy</div>
+          <div class="history-text">Transparently corrects errors with editor's notes and updates.</div>
+        </div>
+      `;
+      break;
+    case 'medium':
+      historyItems = `
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-medium);">⚠ Mixed Sourcing</div>
+          <div class="history-text">Generally cites sources but occasionally relies on secondary reporting.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-medium);">⚠ Occasional Errors</div>
+          <div class="history-text">Has published some unverified claims that required later correction.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-high);">✓ Basic Fact Checking</div>
+          <div class="history-text">Attempts to verify major claims but may miss nuanced details.</div>
+        </div>
+      `;
+      break;
+    case 'low':
+      historyItems = `
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-low);">✗ Poor Sourcing</div>
+          <div class="history-text">Frequently fails to cite sources or relies on questionable information.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-low);">✗ Failed Fact Checks</div>
+          <div class="history-text">Has a history of publishing false or misleading information.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-low);">✗ Lack of Corrections</div>
+          <div class="history-text">Rarely acknowledges or corrects factual errors when identified.</div>
+        </div>
+      `;
+      break;
+    default:
+      historyItems = `
+        <div class="history-item">
+          <div class="history-type" style="color: var(--neutral-500);">? Limited Information</div>
+          <div class="history-text">We have insufficient data about this source's factual reporting history.</div>
+        </div>
+      `;
+  }
+  
+  // Generate cognitive insight based on bias and reliability
+  let cognitiveInsight = '';
+  let cognitiveEmoji = '';
+  
+  if (biasData.bias !== 'unknown') {
+    if (biasData.reliability === 'high') {
+      cognitiveEmoji = '🧠';
+      cognitiveInsight = 'This source may have a political orientation, but its high reliability indicates a commitment to factual reporting. Selective emphasis on certain topics is more likely than direct misinformation.';
+    } else if (biasData.reliability === 'medium') {
+      cognitiveEmoji = '🔍';
+      cognitiveInsight = 'Be aware of how this source\'s political orientation may affect framing and context. Verify key claims with other high-reliability sources from different perspectives.';
+    } else if (biasData.reliability === 'low') {
+      cognitiveEmoji = '⚠️';
+      cognitiveInsight = 'Exercise caution with this source. Its low reliability combined with a clear political orientation increases the risk of exposure to misinformation or heavily slanted narratives.';
+    }
+  } else if (biasData.reliability !== 'unknown') {
+    cognitiveEmoji = '❓';
+    cognitiveInsight = 'This source\'s reliability metrics provide useful context, but we don\'t have sufficient data on its political orientation. Consider how its coverage might align with different ideological positions.';
+  } else {
+    cognitiveEmoji = '📚';
+    cognitiveInsight = 'Limited data is available for this source. Consider researching its ownership, funding sources, and editorial positions to better understand potential biases.';
+  }
+  
+  // Get the bias color
+  const biasColor = getBiasColor(biasData.bias);
+  
+  const html = `
+    <div id="infodemic-container" class="${theme}">
+      <style>${styles}</style>
+      <div class="infodemic-popup combined-popup" id="infodemic-popup" style="min-height: 420px">
+        <div class="infodemic-header full-width-section">
+          <div class="infodemic-title">
+            <span class="icon-data"></span>
+            Visualize Bias
+          </div>
+          <button class="infodemic-close" id="infodemic-close">✕</button>
+        </div>
+        <div class="infodemic-content">
+          <div class="infodemic-source-name full-width-section">${biasData.name}</div>
+          
+          <!-- Bias Spectrum Visualization - Original design that looked great -->
+          <div class="bias-spectrum-container full-width-section">
+            <div class="section-title">Political Orientation Spectrum</div>
+            <div class="visualization-container">
+              <div class="bias-spectrum">
+                <div class="spectrum-marker" style="left: ${position}%;"></div>
+              </div>
+              
+              <div class="spectrum-endpoints">
+                <div class="endpoint-left">Conservative</div>
+                <div class="endpoint-right">Progressive</div>
+              </div>
+              
+              <div class="spectrum-labels">
+                <div class="spectrum-label">Right</div>
+                <div class="spectrum-label">Center-Right</div>
+                <div class="spectrum-label">Center</div>
+                <div class="spectrum-label">Center-Left</div>
+                <div class="spectrum-label">Left</div>
+              </div>
+              
+              <div class="example-sources">
+                ${examplesHTML}
+              </div>
+            </div>
+            
+            <div class="infodemic-badge-container">
+              <span class="infodemic-badge" style="background-color: ${biasColor}">
+                ${formatBiasLabel(biasData.bias)}
+              </span>
+            </div>
+          </div>
+          
+          <!-- Left Column: Bias Details -->
+          <div class="infodemic-section">
+            <div class="section-title">Political Bias Analysis</div>
+            <div class="section-description">
+              ${biasDescription}
+            </div>
+            
+            <div class="cognitive-insight">
+              <strong><span class="emoji-icon">${cognitiveEmoji}</span> Cognitive Impact:</strong> ${cognitiveInsight}
+            </div>
+          </div>
+          
+          <!-- Right Column: Reliability Information -->
+          <div class="infodemic-section">
+            <div class="section-title">Factual Reporting</div>
+            <div class="infodemic-reliability-meter">
+              <div class="reliability-score">
+                ${reliabilityHTML}
+              </div>
+              <div class="reliability-label">
+                <span class="infodemic-badge" style="background-color: ${reliabilityColor}">
+                  ${formatReliabilityLabel(biasData.reliability)} Reliability
+                </span>
+              </div>
+            </div>
+            
+            <div class="section-description">
+              ${reliabilityDescription}
+            </div>
+            
+            <div class="history-items">
+              ${historyItems}
+            </div>
+          </div>
+          
+          <div class="infodemic-tip full-width-section">
+            <strong><span class="emoji-icon">💡</span> Research Note:</strong> Awareness of media bias helps you become a more critical consumer of information. High reliability sources across the political spectrum can provide valuable perspectives, even when you disagree with their orientation.
+          </div>
+        </div>
+        <div class="infodemic-footer full-width-section">
+          <div>Infodemic Fighter</div>
+          <div>v0.1.0</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  return html;
+}
+
+// Function to show comprehensive source analysis (combines bias and reliability)
+function showSourceAnalysis(tabId, url, biasData) {
+  chrome.storage.local.get(['settings'], (result) => {
+    const popupHTML = createSourceAnalysisPopup(biasData, result.settings);
+    sendPopupToContentScript(tabId, popupHTML);
+  });
+}
+
+// Function to show data visualization (combines bias spectrum and factual history)
+function showDataVisualization(tabId, url, biasData) {
+  chrome.storage.local.get(['settings'], (result) => {
+    const popupHTML = createDataVisualizationPopup(biasData, result.settings);
+    sendPopupToContentScript(tabId, popupHTML);
+  });
+}
+
+// Function to suggest alternative sources from across the spectrum
+function showAlternativeSources(tabId, url, biasData) {
+  // Find alternative sources with different biases but high reliability
+  const alternatives = findAlternativeSources(biasData.bias);
+  
+  chrome.storage.local.get(['settings'], (result) => {
+    const popupHTML = createAlternativeSourcesPopup(biasData, alternatives, result.settings);
+    sendPopupToContentScript(tabId, popupHTML);
+  });
+}
+
+// Helper function to send popup to content script
+function sendPopupToContentScript(tabId, popupHTML) {
+  // Use sendMessage with promise handling to catch errors properly
+  chrome.tabs.sendMessage(tabId, {
+    type: 'SHOW_BIAS_POPUP',
+    html: popupHTML
+  }).catch(error => {
+    console.error('Error sending message to tab:', error);
+  });
+}
+
+// Create comprehensive source analysis popup (combines bias and reliability)
+function createSourceAnalysisPopup(biasData, settings) {
+  const theme = settings?.darkMode ? 'dark-mode' : 'light-mode';
+  const styles = getPopupStyles(theme);
+  
+  // Get colors based on data
+  const biasColor = getBiasColor(biasData.bias);
+  const reliabilityColor = getReliabilityColor(biasData.reliability);
+  
+  // Get reliability indicators
+  let reliabilityIcons = '';
+  let reliabilityDescription = '';
+  
+  switch(biasData.reliability) {
+    case 'high':
+      reliabilityIcons = '✓ ✓ ✓';
+      reliabilityDescription = 'This source demonstrates strong factual reporting, proper sourcing, and minimal failed fact checks.';
+      break;
+    case 'medium':
+      reliabilityIcons = '✓ ✓ ○';
+      reliabilityDescription = 'This source generally reports factually but may occasionally publish misleading or unverified claims.';
+      break;
+    case 'low':
+      reliabilityIcons = '✓ ○ ○';
+      reliabilityDescription = 'This source has a history of publishing misleading, unverified, or false information.';
+      break;
+    default:
+      reliabilityIcons = '? ? ?';
+      reliabilityDescription = 'Limited information available about this source\'s reliability.';
+  }
+  
+  // Get bias description
+  let biasDescription = '';
+  switch(biasData.bias) {
+    case 'left':
+      biasDescription = 'This source typically presents news from a progressive/liberal perspective. It may prioritize topics like social justice, climate change, and economic equality.';
+      break;
+    case 'lean-left':
+      biasDescription = 'This source has a moderate liberal bias in reporting and topic selection, though may attempt to follow traditional journalistic standards.';
+      break;
+    case 'center':
+      biasDescription = 'This source aims to present balanced coverage with minimal bias in either direction. It likely covers a wide range of perspectives.';
+      break;
+    case 'lean-right':
+      biasDescription = 'This source has a moderate conservative bias in reporting and topic selection, though may attempt to follow traditional journalistic standards.';
+      break;
+    case 'right':
+      biasDescription = 'This source typically presents news from a conservative perspective. It may prioritize topics like traditional values, national security, and free markets.';
+      break;
+    default:
+      biasDescription = 'We have limited information about this source\'s political leaning. Consider researching the publisher\'s background.';
+  }
+  
+  const html = `
+    <div id="infodemic-container">
+      <style>${styles}</style>
+      <div class="infodemic-popup" id="infodemic-popup">
+        <div class="infodemic-header">
+          <div class="infodemic-title">
+            <span class="icon-microscope"></span>
+            Source Analysis
+          </div>
+          <button class="infodemic-close" id="infodemic-close">✕</button>
+        </div>
+        <div class="infodemic-content">
+          <div class="infodemic-source-name">${biasData.name}</div>
+          
+          <!-- Bias Section -->
+          <div class="infodemic-section">
+            <div class="section-title">Political Orientation</div>
+            <div class="infodemic-bias-meter">
+              <div class="infodemic-bias-scale">
+                <div class="scale-marker left">Left</div>
+                <div class="scale-marker center">Center</div>
+                <div class="scale-marker right">Right</div>
+                <div class="scale-position" style="left: ${getBiasPosition(biasData.bias)}%"></div>
+              </div>
+            </div>
+            
+            <div class="infodemic-badge-container">
+              <span class="infodemic-badge" style="background-color: ${biasColor}">
+                ${formatBiasLabel(biasData.bias)}
+              </span>
+            </div>
+            
+            <div class="section-description">
+              ${biasDescription}
+            </div>
+          </div>
+          
+          <!-- Reliability Section -->
+          <div class="infodemic-section">
+            <div class="section-title">Factual Reporting</div>
+            <div class="infodemic-reliability-meter">
+              <div class="reliability-score" style="color: ${reliabilityColor}">
+                ${reliabilityIcons}
+              </div>
+              <div class="reliability-label">
+                <span class="infodemic-badge" style="background-color: ${reliabilityColor}">
+                  ${formatReliabilityLabel(biasData.reliability)}
+                </span>
+              </div>
+            </div>
+            
+            <div class="section-description">
+              ${reliabilityDescription}
+            </div>
+          </div>
+          
+          <div class="infodemic-tip">
+            <strong>Research Note:</strong> Consider how both bias and reliability affect information quality. High reliability sources can maintain factual accuracy despite having a political orientation.
+          </div>
+        </div>
+        <div class="infodemic-footer">
+          <div>Infodemic Fighter</div>
+          <div>v0.1.0</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  return html;
+}
+
+// Create data visualization popup (combines bias spectrum and factual history)
+function createDataVisualizationPopup(biasData, settings) {
+  const theme = settings?.darkMode ? 'dark-mode' : 'light-mode';
+  const styles = getPopupStyles(theme) + `
+    .visualization-container {
+      margin: 20px 0;
+    }
+    .bias-spectrum {
+      position: relative;
+      height: 40px;
+      background: linear-gradient(to right, var(--data-left), #78D1FF, var(--data-center), #C76363, var(--data-right));
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    .spectrum-marker {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: white;
+      border: 2px solid black;
+      border-radius: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .spectrum-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .example-sources {
+      display: flex;
+      justify-content: space-between;
+      margin: 15px 0;
+      position: relative;
+      height: 24px;
+    }
+    .example-source {
+      position: absolute;
+      font-size: 11px;
+      transform: translateX(-50%);
+    }
+    .history-items {
+      margin-top: 15px;
+    }
+    .history-item {
+      padding: 8px;
+      margin-bottom: 6px;
+      border-radius: 4px;
+      background-color: var(--bg-elevated);
+      border: 1px solid var(--border-color);
+    }
+    .history-type {
+      font-weight: var(--font-weight-medium);
+      margin-bottom: 4px;
+    }
+    .history-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+  `;
+  
+  // Calculate position based on bias
+  const position = getBiasPosition(biasData.bias);
+  
+  // Example sources across the spectrum for comparison
+  const examples = [
+    { name: "Jacobin", bias: "left", position: 10 },
+    { name: "NYT", bias: "lean-left", position: 30 },
+    { name: "AP/Reuters", bias: "center", position: 50 },
+    { name: "WSJ", bias: "lean-right", position: 70 },
+    { name: "Fox News", bias: "right", position: 90 }
+  ];
+  
+  // Generate example HTML
+  let examplesHTML = '';
+  examples.forEach(example => {
+    examplesHTML += `
+      <div class="example-source" style="left: ${example.position}%;">
+        ${example.name}
+      </div>
+    `;
+  });
+  
+  // Generate factual reporting history items
+  let historyItems = '';
+  
+  switch(biasData.reliability) {
+    case 'high':
+      historyItems = `
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-high);">✓ Strong Sourcing</div>
+          <div class="history-text">Consistently cites primary sources and provides links to raw data.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-high);">✓ Fact Checking</div>
+          <div class="history-text">Employs dedicated fact-checkers and verifies information before publishing.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-high);">✓ Correction Policy</div>
+          <div class="history-text">Transparently corrects errors with editor's notes and updates.</div>
+        </div>
+      `;
+      break;
+    case 'medium':
+      historyItems = `
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-medium);">⚠ Mixed Sourcing</div>
+          <div class="history-text">Generally cites sources but occasionally relies on secondary reporting.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-medium);">⚠ Occasional Errors</div>
+          <div class="history-text">Has published some unverified claims that required later correction.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-high);">✓ Basic Fact Checking</div>
+          <div class="history-text">Attempts to verify major claims but may miss nuanced details.</div>
+        </div>
+      `;
+      break;
+    case 'low':
+      historyItems = `
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-low);">✗ Poor Sourcing</div>
+          <div class="history-text">Frequently fails to cite sources or relies on questionable information.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-low);">✗ Failed Fact Checks</div>
+          <div class="history-text">Has a history of publishing false or misleading information.</div>
+        </div>
+        <div class="history-item">
+          <div class="history-type" style="color: var(--reliability-low);">✗ Lack of Corrections</div>
+          <div class="history-text">Rarely acknowledges or corrects factual errors when identified.</div>
+        </div>
+      `;
+      break;
+    default:
+      historyItems = `
+        <div class="history-item">
+          <div class="history-type" style="color: var(--neutral-500);">? Limited Information</div>
+          <div class="history-text">We have insufficient data about this source's factual reporting history.</div>
+        </div>
+      `;
+  }
+  
+  const html = `
+    <div id="infodemic-container">
+      <style>${styles}</style>
+      <div class="infodemic-popup" id="infodemic-popup" style="min-height: 420px">
+        <div class="infodemic-header">
+          <div class="infodemic-title">
+            <span class="icon-data"></span>
+            Data Visualization
+          </div>
+          <button class="infodemic-close" id="infodemic-close">✕</button>
+        </div>
+        <div class="infodemic-content">
+          <div class="infodemic-source-name">${biasData.name}</div>
+          
+          <!-- Bias Spectrum Visualization -->
+          <div class="infodemic-section">
+            <div class="section-title">Political Orientation Spectrum</div>
+            <div class="visualization-container">
+              <div class="bias-spectrum">
+                <div class="spectrum-marker" style="left: ${position}%;"></div>
+              </div>
+              
+              <div class="spectrum-labels">
+                <div class="spectrum-label">Left</div>
+                <div class="spectrum-label">Center-Left</div>
+                <div class="spectrum-label">Center</div>
+                <div class="spectrum-label">Center-Right</div>
+                <div class="spectrum-label">Right</div>
+              </div>
+              
+              <div class="example-sources">
+                ${examplesHTML}
+              </div>
+            </div>
+          </div>
+          
+          <!-- Factual Reporting History -->
+          <div class="infodemic-section">
+            <div class="section-title">Factual Reporting Patterns</div>
+            <div class="infodemic-badge-container">
+              <span class="infodemic-badge" style="background-color: ${getReliabilityColor(biasData.reliability)}">
+                ${formatReliabilityLabel(biasData.reliability)} Reliability
+              </span>
+            </div>
+            
+            <div class="history-items">
+              ${historyItems}
+            </div>
+          </div>
+          
+          <div class="infodemic-tip">
+            <strong>Research Note:</strong> Political orientation does not determine factual accuracy. Sources across the spectrum can maintain high standards of evidence-based reporting.
+          </div>
+        </div>
+        <div class="infodemic-footer">
+          <div>Infodemic Fighter</div>
+          <div>v0.1.0</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  return html;
+}
+
+// Create alternative sources popup
+function createAlternativeSourcesPopup(biasData, alternatives, settings) {
+  const theme = settings?.darkMode ? 'dark-mode' : 'light-mode';
+  const styles = getPopupStyles(theme) + `
+    .alternatives-list {
+      margin-top: 12px;
+    }
+    .alternative-source {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      background-color: var(--bg-elevated);
+      border: 1px solid var(--border-color);
+      transition: transform 0.15s ease;
+    }
+    .alternative-source:hover {
+      transform: translateY(-2px);
+    }
+    .alternative-name {
+      font-weight: 500;
+    }
+    .alternative-bias {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      color: white;
+    }
+    
+    .cognitive-insight {
+      background-color: var(--bg-elevated);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 16px;
+      line-height: 1.4;
+      font-size: 14px;
+      border-left: 3px solid var(--accent-primary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .cognitive-insight strong {
+      color: var(--text-primary);
+    }
+    
+    .emoji-icon {
+      margin-right: 5px;
+    }
+  `;
+  
+  // Create alternative sources HTML
+  let alternativesHTML = '';
+  
+  if (alternatives.length > 0) {
+    alternatives.forEach(alt => {
+      let biasColor;
+      switch(alt.bias) {
+        case 'left': biasColor = '#46C2FF'; break; // Blue for left
+        case 'lean-left': biasColor = '#78D1FF'; break;
+        case 'center': biasColor = '#82c91e'; break;
+        case 'lean-right': biasColor = '#C76363'; break;
+        case 'right': biasColor = '#A52A2A'; break; // Red for right
+        default: biasColor = '#999999';
+      }
+      
+      alternativesHTML += `
+        <div class="alternative-source">
+          <div class="alternative-name">${alt.name}</div>
+          <div class="alternative-bias" style="background-color: ${biasColor}">
+            ${formatBiasLabel(alt.bias)}
+          </div>
+        </div>
+      `;
+    });
+  } else {
+    alternativesHTML = '<div class="no-alternatives">No alternatives found for this topic.</div>';
+  }
+  
+  const html = `
+    <div id="infodemic-container" class="${theme}">
+      <style>${styles}</style>
+      <div class="infodemic-popup" id="infodemic-popup">
+        <div class="infodemic-header">
+          <div class="infodemic-title">
+            <span class="icon-analysis"></span>
+            Alternative Sources
+          </div>
+          <button class="infodemic-close" id="infodemic-close">✕</button>
+        </div>
+        <div class="infodemic-content">
+          <div class="infodemic-source-name">${biasData.name}</div>
+          <div class="infodemic-current">
+            <span class="current-label">Current Source:</span>
+            <span class="infodemic-badge" style="background-color: ${getBiasColor(biasData.bias)}">
+              ${formatBiasLabel(biasData.bias)}
+            </span>
+            <span class="infodemic-badge" style="background-color: ${getReliabilityColor(biasData.reliability)}">
+              ${formatReliabilityLabel(biasData.reliability)} Reliability
+            </span>
+          </div>
+          
+          <div class="section-title">Balance Your Perspective</div>
+          <div class="section-description">
+            Explore these reliable sources with different viewpoints:
+          </div>
+          
+          <div class="alternatives-list">
+            ${alternativesHTML}
+          </div>
+          
+          <div class="cognitive-insight">
+            <strong><span class="emoji-icon">🧩</span> Cognitive Insight:</strong> Reading across the political spectrum helps build a more complete understanding of complex issues and reduces confirmation bias.
+          </div>
+        </div>
+        <div class="infodemic-footer">
+          <div>Infodemic Fighter</div>
+          <div>v0.1.0</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  return html;
+}
+
+// Get shared popup styles matching the main extension popup style
+function getPopupStyles(theme) {
+  return `
     #infodemic-container {
       position: fixed;
       z-index: 10000;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+      font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
     }
     
     .infodemic-popup {
-      background: ${bgColor};
-      color: ${textColor};
+      background: var(--bg-elevated);
+      color: var(--text-primary);
       border-radius: 8px;
       box-shadow: 0 4px 25px rgba(0, 0, 0, 0.3);
-      width: 320px;
-      font-family: 'Segoe UI', Arial, sans-serif;
+      width: 340px;
       overflow: hidden;
       animation: infodemicFadeIn 0.3s ease-out;
+      border: 1px solid var(--border-color);
     }
     
     @keyframes infodemicFadeIn {
@@ -146,7 +1115,7 @@ function createEnhancedBiasPopup(biasData, settings) {
     }
     
     .infodemic-header {
-      background: ${headerBg};
+      background: linear-gradient(135deg, var(--color-red-pill), var(--color-blue-pill));
       color: white;
       padding: 12px 16px;
       display: flex;
@@ -159,11 +1128,35 @@ function createEnhancedBiasPopup(biasData, settings) {
       font-weight: 500;
       display: flex;
       align-items: center;
+      color: white;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
-    .infodemic-title-icon {
+    .infodemic-title .icon-microscope::before,
+    .infodemic-title .icon-data::before,
+    .infodemic-title .icon-lab::before,
+    .infodemic-title .icon-analysis::before {
+      content: "";
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      background-color: white;
+      mask-size: contain;
+      mask-repeat: no-repeat;
+      mask-position: center;
       margin-right: 8px;
-      font-size: 16px;
+    }
+    
+    .infodemic-title .icon-microscope::before {
+      mask-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h8"></path><path d="M3 22h18"></path><path d="M14 22a2 2 0 0 1-2-2"></path><path d="M10 22a2 2 0 0 0 2-2"></path><path d="M10 14v4"></path><path d="M13 14h-3"></path><circle cx="12" cy="9" r="2"></circle><path d="M12 3v4"></path><path d="M10 7.25c.69.13 1.3.25 2 .25s1.31-.12 2-.25"></path><path d="M15 11.15l2.5 2.35"></path></svg>');
+    }
+    
+    .infodemic-title .icon-data::before {
+      mask-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="9" y1="9" x2="9" y2="15"></line><line x1="15" y1="9" x2="15" y2="15"></line><line x1="9" y1="15" x2="15" y2="15"></line><line x1="9" y1="9" x2="15" y2="9"></line><path d="M9 9v6l3 -4l3 4v-6"></path></svg>');
+    }
+    
+    .infodemic-title .icon-analysis::before {
+      mask-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"></path><path d="M5 20v-6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6"></path><path d="M5 14l7-7 7 7"></path><path d="M12 4v3"></path></svg>');
     }
     
     .infodemic-close {
@@ -176,11 +1169,19 @@ function createEnhancedBiasPopup(biasData, settings) {
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      transition: background-color 0.15s;
+    }
+    
+    .infodemic-close:hover {
+      background-color: rgba(255, 255, 255, 0.2);
     }
     
     .infodemic-content {
       padding: 16px;
-      border-bottom: 1px solid ${borderColor};
+      border-bottom: 1px solid var(--border-color);
     }
     
     .infodemic-source-name {
@@ -190,150 +1191,178 @@ function createEnhancedBiasPopup(biasData, settings) {
       word-break: break-word;
     }
     
-    .infodemic-metrics {
-      display: flex;
-      justify-content: space-between;
+    .infodemic-section {
       margin-bottom: 16px;
-    }
-    
-    .infodemic-metric {
-      flex: 1;
-      padding: 8px;
+      padding: 12px;
+      background-color: var(--bg-surface);
       border-radius: 8px;
-      background-color: ${theme === 'purple' ? 'rgba(255, 255, 255, 0.1)' : '#f5f5f5'};
-      margin: 0 4px;
+      border: 1px solid var(--border-color);
     }
     
-    .infodemic-metric-title {
-      font-size: 12px;
-      color: ${theme === 'purple' ? '#ccc' : '#666'};
-      margin-bottom: 4px;
+    .section-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      font-size: 15px;
+      color: var(--text-primary);
     }
     
-    .infodemic-metric-value {
+    .section-description {
+      font-size: 14px;
+      line-height: 1.4;
+      margin-top: 8px;
+      color: var(--text-secondary);
+    }
+    
+    .infodemic-badge-container {
       display: flex;
-      align-items: center;
+      justify-content: center;
+      margin: 10px 0;
     }
     
     .infodemic-badge {
-      padding: 2px 10px;
+      padding: 4px 12px;
       border-radius: 12px;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 500;
       color: white;
+      display: inline-block;
+    }
+    
+    .infodemic-tip {
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 16px 0 0 0;
+      padding: 12px;
+      border-radius: 8px;
+      background-color: var(--bg-surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .infodemic-tip strong {
+      color: var(--text-primary);
+    }
+    
+    .infodemic-current {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .current-label {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    
+    .infodemic-description {
+      font-size: 14px;
+      line-height: 1.4;
+      margin: 12px 0;
+      color: var(--text-secondary);
+    }
+    
+    .alternatives-list {
+      margin-top: 16px;
+    }
+    
+    .no-alternatives {
+      padding: 12px;
+      text-align: center;
+      color: var(--text-secondary);
+      background-color: var(--bg-surface);
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
     }
     
     .infodemic-footer {
       padding: 12px 16px;
-      background: ${theme === 'purple' ? 'rgba(0, 0, 0, 0.2)' : '#f5f5f5'};
+      background-color: var(--bg-surface);
       font-size: 12px;
-      color: ${theme === 'purple' ? '#aaa' : '#666'};
+      color: var(--text-secondary);
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
   `;
-  
-  // Get colors for bias and reliability badges
-  let biasColor, reliabilityColor;
-  
-  switch(biasData.bias) {
-    case 'left': biasColor = '#0000FF'; break;
-    case 'lean-left': biasColor = '#6495ED'; break;
-    case 'center': biasColor = '#808080'; break;
-    case 'lean-right': biasColor = '#FFA500'; break;
-    case 'right': biasColor = '#FF0000'; break;
-    default: biasColor = '#999999';
-  }
-  
-  switch(biasData.reliability) {
-    case 'high': reliabilityColor = '#4CAF50'; break;
-    case 'medium': reliabilityColor = '#FF9800'; break;
-    case 'low': reliabilityColor = '#F44336'; break;
-    default: reliabilityColor = '#999999';
-  }
-  
-  // Create HTML for popup
-  const html = `
-    <div id="infodemic-container">
-      <style>${styles}</style>
-      <div class="infodemic-popup" id="infodemic-popup">
-        <div class="infodemic-header">
-          <div class="infodemic-title">
-            <span class="infodemic-title-icon">🔍</span>
-            Infodemic Fighter Analysis
-          </div>
-          <button class="infodemic-close" id="infodemic-close">✕</button>
-        </div>
-        <div class="infodemic-content">
-          <div class="infodemic-source-name">${biasData.name}</div>
-          <div class="infodemic-metrics">
-            <div class="infodemic-metric">
-              <div class="infodemic-metric-title">Political Bias</div>
-              <div class="infodemic-metric-value">
-                <span class="infodemic-badge" style="background-color: ${biasColor}">
-                  ${formatBiasLabel(biasData.bias)}
-                </span>
-              </div>
-            </div>
-            <div class="infodemic-metric">
-              <div class="infodemic-metric-title">Reliability</div>
-              <div class="infodemic-metric-value">
-                <span class="infodemic-badge" style="background-color: ${reliabilityColor}">
-                  ${formatReliabilityLabel(biasData.reliability)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="infodemic-footer">
-          <div>Powered by Infodemic Fighter</div>
-          <div>v0.1.0</div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  return html;
 }
 
-// Update the showBiasPopup function to use the enhanced popup
-function showBiasPopup(tabId, frameId, url, biasData) {
-  chrome.storage.local.get(['settings'], (result) => {
-    const popupHTML = createEnhancedBiasPopup(biasData, result.settings);
-    
-    // Inject the popup into the page
-    chrome.scripting.executeScript({
-      target: { tabId: tabId, frameIds: [frameId] },
-      func: injectEnhancedPopup,
-      args: [popupHTML],
-    });
-  });
-}
-
-// Function that will be injected into the page
-function injectEnhancedPopup(popupHTML) {
-  // Remove any existing popup
-  const existingPopup = document.getElementById('infodemic-container');
-  if (existingPopup) {
-    existingPopup.remove();
+// Find alternative sources with different biases but high reliability
+function findAlternativeSources(sourceBias) {
+  const alternatives = [];
+  const biasLevels = ['left', 'lean-left', 'center', 'lean-right', 'right'];
+  
+  // Skip the exact same bias (we want alternatives with different perspectives)
+  const otherBiases = biasLevels.filter(bias => bias !== sourceBias);
+  
+  // Find one source from each other bias level that has high reliability
+  for (const bias of otherBiases) {
+    for (const domain in biasDatabase) {
+      const data = biasDatabase[domain];
+      if (data.bias === bias && data.reliability === 'high') {
+        alternatives.push({
+          name: data.name,
+          bias: data.bias,
+          reliability: data.reliability
+        });
+        break; // Only take one from each bias level
+      }
+    }
   }
   
-  // Create the popup
-  const container = document.createElement('div');
-  container.innerHTML = popupHTML;
-  document.body.appendChild(container.firstElementChild);
+  // If we don't have enough high reliability sources, add some medium ones
+  if (alternatives.length < 4) {
+    for (const bias of otherBiases) {
+      if (!alternatives.some(alt => alt.bias === bias)) {
+        for (const domain in biasDatabase) {
+          const data = biasDatabase[domain];
+          if (data.bias === bias && data.reliability === 'medium') {
+            alternatives.push({
+              name: data.name,
+              bias: data.bias,
+              reliability: data.reliability
+            });
+            break;
+          }
+        }
+      }
+    }
+  }
   
-  // Add event listener for close button
-  document.getElementById('infodemic-close').addEventListener('click', () => {
-    document.getElementById('infodemic-container').remove();
-  });
-  
-  // Auto close after 10 seconds
-  setTimeout(() => {
-    const popup = document.getElementById('infodemic-container');
-    if (popup) popup.remove();
-  }, 10000);
+  return alternatives;
+}
+
+// Helper functions
+function getBiasPosition(bias) {
+  switch(bias) {
+    case 'left': return 90;
+    case 'lean-left': return 70;
+    case 'center': return 50;
+    case 'lean-right': return 30;
+    case 'right': return 10;
+    default: return 50;
+  }
+}
+
+function getBiasColor(bias) {
+  switch(bias) {
+    case 'left': return '#46C2FF'; // Blue for left
+    case 'lean-left': return '#78D1FF'; // Lighter blue
+    case 'center': return '#82c91e'; // Green for center
+    case 'lean-right': return '#C76363'; // Lighter red
+    case 'right': return '#A52A2A'; // Red for right
+    default: return '#999999';
+  }
+}
+
+function getReliabilityColor(reliability) {
+  switch(reliability) {
+    case 'high': return '#4CAF50';
+    case 'medium': return '#FF9800';
+    case 'low': return '#F44336';
+    default: return '#999999';
+  }
 }
 
 // Format bias label for display

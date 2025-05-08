@@ -1,55 +1,27 @@
 /* 
- * Infodemic Fighter Popup Styles - Scientific/Professional Theme
- * With red and blue pill color scheme
+ * Infodemic Fighter Popup Styles
+ * Scientific/Academic Design
  */
 
-/* Theme variables and transitions */
-:root {
-  /* Core color scheme - scientific/professional */
-  --color-red-pill: #AA0000;
-  --color-blue-pill: #0055AA;
-  --color-purple-dark: #2D0B42;
-  
-  /* Theme variables that change based on selected theme */
-  --bg-color: #FFFFFF;  /* Default: clean white background */
-  --text-color: #333333;
-  --accent-color: var(--color-blue-pill);
-  --slider-bg: rgba(0, 0, 0, 0.1);
-  --slider-thumb: var(--color-blue-pill);
-  --border-color: #DDDDDD;
-  
-  /* Golden ratio calculations */
-  --base-unit: 10px;
-  --phi: 1.618;
-  
-  /* Derived sizes */
-  --size-xs: calc(var(--base-unit));
-  --size-sm: calc(var(--base-unit) * var(--phi));
-  --size-md: calc(var(--size-sm) * var(--phi));
-  --size-lg: calc(var(--size-md) * var(--phi));
-  --size-xl: calc(var(--size-lg) * var(--phi));
-  
-  /* Transition timing */
-  --transition-speed: 0.25s;
-}
+@import 'common.css';
 
 /* Apply clean reset */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  font-family: var(--font-family-base);
 }
 
 body {
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  transition: background-color var(--transition-speed), color var(--transition-speed);
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  transition: background-color var(--transition-normal), color var(--transition-normal);
   width: 320px;
   padding: 0;
-  line-height: 1.5;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
+  line-height: var(--line-height-base);
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
@@ -57,36 +29,67 @@ body {
   padding: 0;
 }
 
-/* Header with logo */
+/* Header with scientific branding */
 .header {
   display: flex;
   align-items: center;
   padding: var(--size-md);
-  background: linear-gradient(to right, var(--color-red-pill), var(--color-blue-pill));
+  background: linear-gradient(135deg, var(--color-red-pill), var(--color-blue-pill));
   color: white;
   margin-bottom: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Scientific subtle shimmer animation */
+.header::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 60%
+  );
+  opacity: 0;
+  transform: translate(-30%, -30%);
+  transition: opacity var(--transition-normal) var(--ease-out);
+  pointer-events: none;
+}
+
+.header:hover::after {
+  opacity: 1;
+  animation: shimmer 5s infinite linear;
 }
 
 .logo {
   width: 36px;
   height: 36px;
   margin-right: 12px;
-  /* Apply slight glow to logo */
   filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
+  transition: transform var(--transition-normal) var(--ease-bounce);
+}
+
+.header:hover .logo {
+  transform: rotate(10deg);
 }
 
 h1 {
   font-size: 1.2rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   margin: 0;
   color: white;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  letter-spacing: var(--letter-spacing-tight);
 }
 
-/* Tab Navigation - Scientific Style */
+/* Scientific Navigation */
 .tabs {
   display: flex;
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--bg-elevated);
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -94,27 +97,32 @@ h1 {
   flex: 1;
   background: none;
   border: none;
-  color: var(--text-color);
+  color: var(--text-primary);
   padding: var(--size-sm) 0;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   opacity: 0.7;
-  transition: all var(--transition-speed) ease;
+  transition: all var(--transition-normal) var(--ease-out);
   position: relative;
   overflow: hidden;
 }
 
 .tabs button:hover {
   opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.tabs button:active {
+  transform: translateY(0);
 }
 
 .tabs button.active {
   opacity: 1;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
-/* Active indicator - pill shaped */
+/* Active indicator with animation */
 .tabs button.active:after {
   content: '';
   position: absolute;
@@ -122,13 +130,21 @@ h1 {
   left: 25%;
   width: 50%;
   height: 3px;
-  background-color: var(--accent-color);
+  background-color: var(--accent-primary);
   border-radius: 3px 3px 0 0;
+  animation: fadeIn 0.3s var(--ease-out);
 }
 
+/* Scientific icons */
 .icon {
   margin-right: 6px;
   font-size: 14px;
+  display: inline-block;
+  transition: transform var(--transition-fast) var(--ease-bounce);
+}
+
+.tabs button:hover .icon {
+  transform: translateY(-2px);
 }
 
 /* Tab Content */
@@ -139,21 +155,27 @@ h1 {
 
 .tab-content.active {
   display: block;
-  animation: fadeIn var(--transition-speed) ease;
+  animation: fadeIn var(--transition-normal) var(--ease-out);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Toggle Switch Styling - Made to look like pills */
+/* Toggle Switch - Scientific styling */
 .toggle-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
   font-size: 14px;
+  padding: var(--size-sm);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  transition: transform var(--transition-normal) var(--ease-out),
+    box-shadow var(--transition-normal) var(--ease-out);
+}
+
+.toggle-container:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .toggle {
@@ -169,7 +191,7 @@ h1 {
   height: 0;
 }
 
-/* Pill-shaped toggle switch */
+/* Laboratory-inspired slider switch */
 .slider {
   position: absolute;
   cursor: pointer;
@@ -179,7 +201,8 @@ h1 {
   bottom: 0;
   background-color: var(--slider-bg);
   border-radius: 24px;
-  transition: background-color var(--transition-speed);
+  transition: background-color var(--transition-normal);
+  overflow: hidden;
 }
 
 .slider:before {
@@ -191,169 +214,110 @@ h1 {
   bottom: 3px;
   background-color: white;
   border-radius: 50%;
-  transition: transform var(--transition-speed);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform var(--transition-normal) var(--ease-bounce);
+  box-shadow: var(--shadow-sm);
+  z-index: 2;
 }
 
 input:checked + .slider {
-  background-color: var(--accent-color);
+  background-color: var(--accent-primary);
 }
 
 input:focus + .slider {
-  box-shadow: 0 0 3px var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
 }
 
 input:checked + .slider:before {
   transform: translateX(22px);
 }
 
-/* Theme selector - Pill style radio buttons */
-.theme-selector {
-  margin-top: var(--size-md);
-}
-
-.theme-selector label {
-  display: block;
-  margin-bottom: var(--size-xs);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.theme-options {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.theme-option {
-  flex: 1;
-  position: relative;
-}
-
-.theme-option input[type="radio"] {
+/* Dark/Light mode toggle with scientific symbols */
+.theme-toggle .slider:after {
+  content: "☀️";
   position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
+  right: 6px;
+  top: 3px;
+  font-size: 14px;
+  opacity: 0.7;
+  transition: opacity var(--transition-normal);
 }
 
-.theme-option label {
-  display: block;
-  text-align: center;
-  padding: 8px;
-  background-color: #f5f5f5;
-  border-radius: 20px;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: all var(--transition-speed);
-  font-size: 13px;
-  font-weight: normal;
-  margin: 0;
+.theme-toggle input:checked + .slider:after {
+  content: "🌙";
+  left: 6px;
+  right: auto;
 }
 
-.theme-option.red label {
-  background-color: #ffeeee;
-  color: var(--color-red-pill);
+.theme-toggle:hover .slider:after {
+  opacity: 1;
+  animation: bounce 1s var(--ease-bounce);
 }
 
-.theme-option.blue label {
-  background-color: #eef5ff;
-  color: var(--color-blue-pill);
-}
-
-.theme-option.purple label {
-  background-color: #f5eeff;
-  color: var(--color-purple-dark);
-}
-
-.theme-option input[type="radio"]:checked + label {
-  border-color: currentColor;
-  font-weight: 500;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-/* About Tab Styling */
+/* About tab content - scientific styling */
 #content-about {
   text-align: center;
 }
 
 #content-about .logo-container {
-  margin: 0 auto var(--size-md);
   display: flex;
   justify-content: center;
-  align-items: center;
+  margin: 20px 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: transform var(--transition-normal) var(--ease-bounce);
+}
+
+#content-about .logo-container:hover {
+  transform: scale(1.1) rotate(5deg);
 }
 
 #content-about .logo-container img {
   width: 80px;
   height: 80px;
+  border-radius: var(--radius-lg);
 }
 
 #content-about p {
   font-size: 14px;
+  margin-bottom: 16px;
   line-height: 1.6;
-  margin-bottom: var(--size-md);
+  color: var(--text-secondary);
   text-align: left;
-  color: var(--text-color);
+  transition: transform var(--transition-normal) var(--ease-out);
+  padding: var(--size-sm);
+  border-radius: var(--radius-md);
+}
+
+#content-about p:hover {
+  transform: translateY(-2px);
+  background-color: var(--bg-elevated);
+  box-shadow: var(--shadow-sm);
 }
 
 #content-about .version {
-  display: inline-block;
-  padding: 4px 10px;
-  background-color: rgba(0,0,0,0.05);
-  border-radius: 12px;
   font-size: 12px;
-  margin-top: var(--size-sm);
+  color: var(--text-tertiary);
+  margin-top: 24px;
+  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
 }
 
 /* Footer */
 .footer {
-  margin-top: 0;
-  text-align: center;
-  font-size: 11px;
-  color: #888;
-  padding: 8px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-/* Theme Implementations */
-body.theme-red {
-  --accent-color: var(--color-red-pill);
-  --slider-thumb: var(--color-red-pill);
-}
-
-body.theme-blue {
-  --accent-color: var(--color-blue-pill);
-  --slider-thumb: var(--color-blue-pill);
-}
-
-body.theme-purple {
-  --bg-color: var(--color-purple-dark);
-  --text-color: #f0f0f0;
-  --border-color: rgba(255, 255, 255, 0.1);
-  --accent-color: #9966CC;
-  --slider-bg: rgba(255, 255, 255, 0.2);
-}
-
-/* Preserve tooltip styles */
-.infodemic-tooltip {
-  position: fixed !important;
-  z-index: 2147483647 !important; /* Maximum z-index value */
-  visibility: hidden;
-  background-color: white;
-  color: black;
-  padding: 10px;
-  border-radius: 4px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.3);
-  width: 220px;
+  padding: 12px;
   font-size: 12px;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  opacity: 0;
+  color: var(--text-tertiary);
+  text-align: center;
+  background-color: var(--bg-elevated);
+  border-top: 1px solid var(--border-color);
 }
 
-.infodemic-indicator:hover .infodemic-tooltip {
-  visibility: visible !important;
-  opacity: 1 !important;
+.footer a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast) var(--ease-out);
+}
+
+.footer a:hover {
+  text-decoration: underline;
+  color: var(--accent-secondary);
 }

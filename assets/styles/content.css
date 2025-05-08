@@ -1,126 +1,94 @@
 /* 
  * Content styles for search result indicators
- * Using golden ratio (1:1.618) for proportions
- * Designed for high-quality visual feedback and accessibility
+ * Scientific/Academic Design
  */
 
-:root {
-  /* Golden ratio calculations */
-  --base-unit: 8px;
-  --phi: 1.618;
-  
-  /* Derived sizes */
-  --size-xs: calc(var(--base-unit));
-  --size-sm: calc(var(--base-unit) * var(--phi));
-  --size-md: calc(var(--size-sm) * var(--phi));
-  --size-lg: calc(var(--size-md) * var(--phi));
-  
-  /* Brand Colors */
-  --color-primary-red: #A52A2A;
-  --color-primary-blue: #46C2FF;
-  
-  /* UI Colors */
-  --color-primary: var(--color-primary-blue);
-  --color-secondary: #f8f9fa;
-  --color-accent: var(--color-primary-red);
-  --color-text-dark: #343a40;
-  --color-text-light: #f8f9fa;
-  --color-border: rgba(0, 0, 0, 0.1);
-  
-  /* Bias colors - updated to match brand palette */
-  --color-left: var(--color-primary-blue);
-  --color-lean-left: #78D1FF; /* Lighter version of primary blue */
-  --color-center: #82c91e;
-  --color-lean-right: #C76363; /* Lighter version of primary red */
-  --color-right: var(--color-primary-red);
-  
-  /* Reliability colors - enhanced for better contrast */
-  --color-high: #40c057;
-  --color-medium: #fab005;
-  --color-low: #fa5252;
-  
-  /* Animation speeds */
-  --transition-fast: 150ms;
-  --transition-normal: 250ms;
-  
-  /* Effects */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
-  --radius-sm: var(--size-xs);
-  --radius-md: calc(var(--size-xs) * 1.5);
-  --radius-lg: calc(var(--size-sm) * 0.75);
-}
+@import 'common.css';
 
-/* Bias indicator container - refined for better visibility */
+/* Bias indicator container - scientific instrumentation inspired */
 .infodemic-indicator {
   display: inline-flex;
   align-items: center;
   margin-left: var(--size-sm);
-  font-size: 16px;
-  transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 14px;
+  transition: all var(--transition-normal) var(--ease-out);
   position: relative;
-  z-index: 5; /* Ensure visibility above search result content */
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  line-height: 1;
+  z-index: 5;
+  font-family: var(--font-family-base);
+  line-height: var(--line-height-tight);
   white-space: nowrap;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  transform-origin: center;
 }
 
 .infodemic-indicator:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px) scale(1.02);
 }
 
 .infodemic-indicator:active {
-  transform: translateY(0);
-  box-shadow: var(--shadow-sm);
+  transform: translateY(0) scale(0.98);
 }
 
-.infodemic-indicator:hover .bias-indicator,
-.infodemic-indicator:hover .reliability-indicator {
-  background-color: rgba(0, 0, 0, 0.05);
-  border-radius: 4px;
-}
-
-/* Bias pill with enhanced contrast and legibility */
+/* Bias pill with scientific data visualization style */
 .bias-pill {
   display: flex;
   align-items: center;
   padding: calc(var(--size-xs) * 0.75) var(--size-xs);
-  color: white;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-tight);
+  transition: all var(--transition-fast) var(--ease-out);
 }
 
-/* Bias icon styling for better visual hierarchy */
+.bias-pill:hover {
+  filter: brightness(1.1);
+}
+
+/* Bias icon - using scientific icons */
 .bias-icon {
   margin-right: calc(var(--size-xs) * 0.5);
   font-size: calc(var(--size-sm) * 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform var(--transition-fast) var(--ease-bounce);
 }
 
-/* Reliability indicator with improved contrast */
+.infodemic-indicator:hover .bias-icon {
+  transform: rotate(10deg);
+}
+
+/* Reliability indicator with research-style metrics */
 .reliability-indicator {
   display: flex;
   align-items: center;
   padding: calc(var(--size-xs) * 0.75) var(--size-xs);
-  background-color: var(--color-secondary);
-  color: var(--color-text-dark);
-  font-weight: 500;
-  border-left: 1px solid var(--color-border);
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+  border-left: 1px solid var(--border-color);
+  transition: all var(--transition-fast) var(--ease-out);
 }
 
-/* Reliability icon styling */
+.reliability-indicator:hover {
+  background-color: var(--bg-surface);
+}
+
+/* Reliability icon - enhanced prominence */
 .reliability-icon {
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: calc(var(--size-xs) * 0.5);
   font-size: calc(var(--size-sm) * 0.85);
+  transition: transform var(--transition-fast) var(--ease-bounce);
+}
+
+.infodemic-indicator:hover .reliability-icon {
+  transform: scale(1.1);
 }
 
 /* Bias colors with improved accessibility */
@@ -171,171 +139,203 @@
   color: #adb5bd;
 }
 
-/* Enhanced tooltip styles for better readability */
-.infodemic-tooltip {
-  position: absolute;
-  bottom: 125%;
-  left: 50%;
-  transform: translateX(-50%) translateY(var(--size-xs));
-  background-color: var(--color-text-dark);
-  color: white;
-  border-radius: var(--radius-sm);
-  padding: var(--size-sm);
-  box-shadow: var(--shadow-lg);
-  pointer-events: none;
-  white-space: nowrap;
-  z-index: 2147483647;
-  visibility: hidden;
-  opacity: 0;
-  transition: opacity var(--transition-normal), visibility var(--transition-normal);
-}
-
+/* Show tooltip on hover with scientific precision */
 .infodemic-indicator:hover .infodemic-tooltip {
   visibility: visible;
   opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
-.infodemic-tooltip::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: calc(var(--size-xs) * -0.5);
-  border-width: var(--size-xs);
-  border-style: solid;
-  border-color: var(--color-text-dark) transparent transparent transparent;
-  z-index: 2147483647;
-
-}
-
-/* Source label in tooltip */
+/* Tooltip components with academic data presentation */
 .tooltip-source {
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
   margin-bottom: var(--size-xs);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding-bottom: var(--size-xs);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Metrics in tooltip */
 .tooltip-metrics {
   display: flex;
   justify-content: space-between;
-  margin-top: var(--size-xs);
+  margin-bottom: var(--size-xs);
+}
+
+/* Enhanced prominence for reliability metrics */
+.tooltip-metric[data-metric="reliability"] {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1.5; /* Give more space to reliability */
+}
+
+.tooltip-metric[data-metric="bias"] {
+  text-align: right;
+  flex: 1;
 }
 
 .tooltip-metric {
-  display: flex;
-  flex-direction: column;
+  padding: 4px 8px;
+  margin-right: var(--size-sm);
+  border-radius: var(--radius-sm);
+  transition: transform var(--transition-fast) var(--ease-bounce);
+}
+
+.tooltip-metric:hover {
+  transform: translateY(-2px);
 }
 
 .tooltip-metric-label {
-  font-size: calc(var(--size-xs) * 1.2);
+  font-size: 11px;
   opacity: 0.8;
-  margin-bottom: 2px;
+  margin-bottom: calc(var(--size-xs) * 0.5);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
 }
 
 .tooltip-metric-value {
-  font-weight: 500;
+  font-weight: var(--font-weight-semibold);
+  font-size: 14px;
 }
 
-/* Colorblind friendly mode with optimized contrast */
+/* Reliability-focused styling */
+.tooltip-metric[data-metric="reliability"] .tooltip-metric-value {
+  position: relative;
+  padding-left: 18px; /* Space for the indicator dot */
+}
+
+.tooltip-metric[data-metric="reliability"] .tooltip-metric-value::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0.8;
+  transition: all var(--transition-fast) var(--ease-bounce);
+}
+
+.tooltip-metric[data-metric="reliability"]:hover .tooltip-metric-value::before {
+  transform: translateY(-50%) scale(1.2);
+  opacity: 1;
+}
+
+/* Colorblind mode adjustments */
 .colorblind .bias-left {
-  background-color: #0072B2; /* Blue */
+  background-color: #0072B2; /* Blue that's distinguishable in colorblind modes */
 }
 
 .colorblind .bias-lean-left {
-  background-color: #56B4E9; /* Light blue */
+  background-color: #56B4E9; /* Light blue that's distinguishable in colorblind modes */
 }
 
 .colorblind .bias-center {
-  background-color: #009E73; /* Green */
+  background-color: #009E73; /* Green that's distinguishable in colorblind modes */
 }
 
 .colorblind .bias-lean-right {
-  background-color: #E69F00; /* Orange */
+  background-color: #E69F00; /* Orange that's distinguishable in colorblind modes */
 }
 
 .colorblind .bias-right {
-  background-color: #D55E00; /* Red-orange */
+  background-color: #D55E00; /* Red-orange that's distinguishable in colorblind modes */
 }
 
-/* Monochrome mode with proper contrast ratios */
+/* Monochrome mode */
 .monochrome .bias-left {
-  background-color: #000000;
+  background-color: #222222;
   color: white;
+  border-left: 5px solid black;
 }
 
 .monochrome .bias-lean-left {
-  background-color: #444444;
+  background-color: #555555;
   color: white;
+  border-left: 3px solid black;
 }
 
 .monochrome .bias-center {
-  background-color: #777777;
-  color: white;
+  background-color: #888888;
+  color: black;
 }
 
 .monochrome .bias-lean-right {
-  background-color: #aaaaaa;
+  background-color: #BBBBBB;
   color: black;
+  border-right: 3px solid black;
 }
 
 .monochrome .bias-right {
-  background-color: #dddddd;
+  background-color: #EEEEEE;
   color: black;
+  border-right: 5px solid black;
 }
 
-/* Context menu result popup enhancements */
+/* Popup styles for context menu results - use common styles */
 .infodemic-popup {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  border-radius: var(--radius-md);
+  animation: infodemicFadeIn 0.3s var(--ease-out);
   box-shadow: var(--shadow-lg);
-  animation: infodemicFadeIn var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--radius-md);
+  max-width: 400px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+  font-family: var(--font-family-base);
 }
 
-@keyframes infodemicFadeIn {
-  from { 
-    opacity: 0; 
-    transform: translateY(var(--size-sm)); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
-  }
+/* Cognitive feedback loading indicator */
+.infodemic-loading {
+  position: relative;
+  overflow: hidden;
 }
 
-/* Optimize for different search engines */
+.infodemic-loading::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.4), 
+    transparent
+  );
+  animation: shimmer 1.5s infinite;
+  z-index: 1;
+}
+
+/* Search-engine specific adjustments */
 .google-search .infodemic-indicator {
-  vertical-align: middle;
-  margin-left: var(--size-xs);
-  font-size: calc(var(--size-sm) * 0.9);
+  margin-left: 4px;
+  font-size: 13px;
 }
 
 .bing-search .infodemic-indicator {
-  vertical-align: middle;
-  margin-left: var(--size-xs);
-  margin-top: 1px;
+  margin-left: 6px;
+  font-size: 13px;
 }
 
 .duckduckgo-search .infodemic-indicator {
-  vertical-align: middle;
-  margin-left: var(--size-xs);
-  margin-top: 2px;
+  margin-left: 6px;
+  font-size: 13px;
 }
 
-/* Responsive adjustments for mobile search */
+/* Mobile responsiveness with accessibility considerations */
 @media (max-width: 640px) {
   .infodemic-indicator {
-    font-size: calc(var(--size-xs) * 1.2);
+    font-size: 12px;
   }
   
   .bias-pill, .reliability-indicator {
-    padding: calc(var(--size-xs) * 0.5) calc(var(--size-xs) * 0.75);
+    padding: 2px 4px;
   }
   
   .infodemic-tooltip {
-    width: calc(var(--size-lg) * 1.25);
-    padding: var(--size-xs);
-    font-size: var(--size-xs);
+    width: 230px;
+    font-size: 12px;
   }
 }

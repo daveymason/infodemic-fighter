@@ -6,21 +6,26 @@
   <title>Infodemic Fighter</title>
   <link rel="stylesheet" href="../assets/styles/popup.css">
 </head>
-<body class="theme-purple">
+<body>
   <div id="app">
     <div id="header" class="header">
       <img src="../assets/icons/logo.png" alt="Infodemic Fighter Logo" class="logo">
       <h1>Infodemic Fighter</h1>
     </div>
     
-    <!-- Tabs Navigation with Emojis instead of FontAwesome -->
+    <!-- Scientific Tab Navigation -->
     <div class="tabs">
-      <button id="tab-settings" class="active">⚙️ Settings</button>
-      <button id="tab-about">ℹ️ About</button>
+      <button id="tab-settings" class="active">
+        <span class="icon-microscope"></span>Settings
+      </button>
+      <button id="tab-about">
+        <span class="icon-lab"></span>About
+      </button>
     </div>
     
     <!-- Settings Tab -->
     <div id="content-settings" class="tab-content active">
+      <!-- Enable/Disable Extension -->
       <div class="toggle-container">
         <span>Enable extension</span>
         <label class="toggle">
@@ -29,6 +34,7 @@
         </label>
       </div>
       
+      <!-- Show Political Bias -->
       <div class="toggle-container">
         <span>Show political bias</span>
         <label class="toggle">
@@ -37,42 +43,33 @@
         </label>
       </div>
       
+      <!-- Show Reliability with emphasis -->
       <div class="toggle-container">
-        <span>Show reliability</span>
+        <span>Show reliability metrics</span>
         <label class="toggle">
           <input type="checkbox" id="showReliabilityIndicator" checked>
           <span class="slider"></span>
         </label>
       </div>
       
-      <!-- Theme selector with pill options -->
-      <div class="theme-selector">
-        <label>Theme:</label>
-        <div class="theme-options">
-          <div class="theme-option red">
-            <input type="radio" name="theme" id="theme-red" value="red">
-            <label for="theme-red">Red Pill</label>
-          </div>
-          <div class="theme-option blue">
-            <input type="radio" name="theme" id="theme-blue" value="blue">
-            <label for="theme-blue">Blue Pill</label>
-          </div>
-          <div class="theme-option purple">
-            <input type="radio" name="theme" id="theme-purple" value="purple" checked>
-            <label for="theme-purple">Pur Pill</label>
-          </div>
-        </div>
+      <!-- Light/Dark mode toggle -->
+      <div class="toggle-container">
+        <span>Dark mode</span>
+        <label class="toggle theme-toggle">
+          <input type="checkbox" id="darkMode">
+          <span class="slider"></span>
+        </label>
       </div>
     </div>
     
-    <!-- About Tab (removed duplicate logo) -->
+    <!-- About Tab with scientific copy -->
     <div id="content-about" class="tab-content">
-      <p>Infodemic Fighter helps you navigate the information landscape by providing visual indicators of political bias and reliability for search results.</p>
-      <p>Take the red pill or the blue pill - either way, you'll see the truth behind your search results!</p>
-    </div>
-    
-    <div class="footer">
-      <p>Infodemic Fighter v0.1.0</p>
+      <div class="logo-container">
+        <img src="../assets/icons/logo.png" alt="Infodemic Fighter Logo">
+      </div>
+      <p>Infodemic Fighter applies scientific methodology to help researchers, academics, and critical thinkers navigate the information landscape by providing objective indicators of media bias and reliability.</p>
+      <p>Our algorithm analyzes historical data patterns to identify factual reporting standards and political orientation of news sources, all displayed through a clear, evidence-based interface.</p>
+      <div class="version">Infodemic Fighter v0.1.0</div>
     </div>
   </div>
 

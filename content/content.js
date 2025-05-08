@@ -44,15 +44,94 @@
       detectSearchEngine();
     }
   });
-
-  // Extract domain from URL
-  function extractDomain(url) {
+  
+  // Track popup state to prevent errors
+  let popupActive = false;
+  let autoCloseTimer = null;
+  
+  // Listen for messages from the background script
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log("Content script received message:", message);
+    
+    // Handle popup display requests
+    if (message.type === 'SHOW_BIAS_POPUP' && message.html) {
+      injectPopup(message.html);
+      sendResponse({ success: true });
+    }
+    
+    return true;
+  });
+  
+  // Function to inject popup into the page
+  function injectPopup(popupHTML) {
     try {
-      if (!url) return '';
-      const domain = new URL(url).hostname;
-      return domain;
-    } catch (e) {
-      return '';
+      // Clean up any existing popup first
+      removeExistingPopup();
+      
+      // Create the popup
+      const container = document.createElement('div');
+      container.innerHTML = popupHTML;
+      document.body.appendChild(container.firstElementChild);
+      
+      // Set popup state to active
+      popupActive = true;
+      
+      // Add event listener for close button
+      const closeButton = document.getElementById('infodemic-close');
+      if (closeButton) {
+        closeButton.addEventListener('click', removeExistingPopup);
+      }
+      
+      // Add a click event on the container to close when clicking outside
+      const popupContainer = document.getElementById('infodemic-container');
+      if (popupContainer) {
+        popupContainer.addEventListener('click', function(e) {
+          if (e.target === popupContainer) {
+            removeExistingPopup();
+          }
+        });
+      }
+      
+      // Auto close after 15 seconds
+      clearTimeout(autoCloseTimer);
+      autoCloseTimer = setTimeout(removeExistingPopup, 15000);
+      
+      // Add a window click listener to close the popup
+      setTimeout(() => {
+        if (popupActive) {
+          window.addEventListener('click', windowClickHandler);
+        }
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error injecting popup:', error);
+    }
+  }
+  
+  // Function to clean up existing popup
+  function removeExistingPopup() {
+    try {
+      const existingPopup = document.getElementById('infodemic-container');
+      if (existingPopup) {
+        existingPopup.remove();
+      }
+      
+      // Reset popup state
+      popupActive = false;
+      clearTimeout(autoCloseTimer);
+      
+      // Remove window click handler
+      window.removeEventListener('click', windowClickHandler);
+    } catch (error) {
+      console.error('Error removing popup:', error);
+    }
+  }
+  
+  // Handler for window clicks (to dismiss popup when clicking outside)
+  function windowClickHandler(event) {
+    const popup = document.getElementById('infodemic-popup');
+    if (popup && !popup.contains(event.target)) {
+      removeExistingPopup();
     }
   }
 

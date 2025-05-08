@@ -53,6 +53,13 @@
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Content script received message:", message);
     
+    // Handle PING requests to check if content script is loaded
+    if (message.type === 'PING') {
+      console.log("Received PING, responding with PONG");
+      sendResponse({ status: 'PONG' });
+      return true;
+    }
+    
     // Handle popup display requests
     if (message.type === 'SHOW_BIAS_POPUP' && message.html) {
       injectPopup(message.html);

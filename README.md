@@ -6,8 +6,8 @@ A lightweight Chrome extension that adds subtle bias and reliability indicators 
 - **Political Bias**: Marks sites as Left, Lean Left, Center, Lean Right, or Right
 - **Reliability**: Rates sources as High, Medium, or Low trustworthiness
 - **Context Menu Check**: Right-click any link to view bias details
-- **Minimalist UI**: No overkill UI or disruptions. 
-- **Themes**: Toggle between Red Pill, Blue Pill, or Purple Mode
+- **Minimalist UI**: No overkill UI or disruptions, just applied HCI principles. 
+- **Themes**: Toggle between Light & Dark mode.
 - **Privacy**: All analysis runs locally; no data is sent externally
 
 ## Installation

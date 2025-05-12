@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Infodemic Fighter",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shows political bias and reliability indicators for news sources in search results",
   "icons": {
     "16": "/assets/icons/icon16.png",
@@ -23,8 +23,7 @@
   "permissions": [
     "storage",
     "contextMenus",
-    "activeTab",
-    "scripting"
+    "activeTab"
   ],
   "host_permissions": [
     "*://www.google.com/search*",

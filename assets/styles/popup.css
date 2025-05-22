@@ -1,188 +1,120 @@
-/* 
- * Infodemic Fighter Popup Styles
- * Scientific/Academic Design
- */
-
-@import 'common.css';
-
-/* Apply clean reset */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: var(--font-family-base);
-}
-
+/* General body styles */
 body {
-  background-color: var(--bg-surface);
+  font-family: var(--font-family-base);
+  background-color: var(--bg-primary);
   color: var(--text-primary);
-  transition: background-color var(--transition-normal), color var(--transition-normal);
-  width: 320px;
-  padding: 0;
-  line-height: var(--line-height-base);
-  box-shadow: var(--shadow-lg);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
+  margin: 0;
+  width: 380px; /* Fixed width for the popup */
+  padding: var(--size-md);
+  border: 1px solid var(--border-color);
+  box-sizing: border-box;
 }
 
-#app {
-  padding: 0;
+/* Dark mode specific styles */
+body.dark-mode {
+  --bg-primary: var(--dark-bg-primary);
+  --bg-secondary: var(--dark-bg-secondary);
+  --bg-elevated: var(--dark-bg-elevated);
+  --text-primary: var(--dark-text-primary);
+  --text-secondary: var(--dark-text-secondary);
+  --border-color: var(--dark-border-color);
+  --accent-primary: var(--dark-accent-primary);
+  --accent-secondary: var(--dark-accent-secondary);
 }
 
-/* Header with scientific branding */
+/* Header styles */
 .header {
   display: flex;
   align-items: center;
-  padding: var(--size-md);
-  background: linear-gradient(135deg, var(--color-red-pill), var(--color-blue-pill));
-  color: white;
-  margin-bottom: 0;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Scientific subtle shimmer animation */
-.header::after {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.1) 0%,
-    transparent 60%
-  );
-  opacity: 0;
-  transform: translate(-30%, -30%);
-  transition: opacity var(--transition-normal) var(--ease-out);
-  pointer-events: none;
-}
-
-.header:hover::after {
-  opacity: 1;
-  animation: shimmer 5s infinite linear;
+  margin-bottom: var(--size-lg);
+  padding-bottom: var(--size-md);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .logo {
-  width: 36px;
-  height: 36px;
-  margin-right: 12px;
-  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
-  transition: transform var(--transition-normal) var(--ease-bounce);
+  width: 40px;
+  height: 40px;
+  margin-right: var(--size-md);
 }
 
-.header:hover .logo {
-  transform: rotate(10deg);
-}
-
-h1 {
-  font-size: 1.2rem;
-  font-weight: var(--font-weight-semibold);
+.header h1 {
+  font-size: 1.5em;
   margin: 0;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  letter-spacing: var(--letter-spacing-tight);
+  color: var(--text-primary);
 }
 
-/* Scientific Navigation */
+/* Tabs navigation */
 .tabs {
   display: flex;
-  background-color: var(--bg-elevated);
+  margin-bottom: var(--size-lg);
   border-bottom: 1px solid var(--border-color);
 }
 
 .tabs button {
-  flex: 1;
+  flex-grow: 1;
+  padding: var(--size-md) 0;
   background: none;
   border: none;
-  color: var(--text-primary);
-  padding: var(--size-sm) 0;
+  border-bottom: 3px solid transparent;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: var(--font-weight-medium);
-  opacity: 0.7;
-  transition: all var(--transition-normal) var(--ease-out);
-  position: relative;
-  overflow: hidden;
+  font-size: 1em;
+  color: var(--text-secondary);
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--size-xs);
 }
 
 .tabs button:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-.tabs button:active {
-  transform: translateY(0);
+  color: var(--accent-primary);
 }
 
 .tabs button.active {
-  opacity: 1;
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
   font-weight: var(--font-weight-semibold);
 }
 
-/* Active indicator with animation */
-.tabs button.active:after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 25%;
-  width: 50%;
-  height: 3px;
-  background-color: var(--accent-primary);
-  border-radius: 3px 3px 0 0;
-  animation: fadeIn 0.3s var(--ease-out);
-}
-
-/* Scientific icons */
-.icon {
-  margin-right: 6px;
-  font-size: 14px;
-  display: inline-block;
-  transition: transform var(--transition-fast) var(--ease-bounce);
-}
-
-.tabs button:hover .icon {
-  transform: translateY(-2px);
-}
-
-/* Tab Content */
+/* Tab content */
 .tab-content {
-  display: none;
-  padding: var(--size-md);
+  display: none; /* Hidden by default */
+  animation: fadeIn var(--transition-normal) ease-out;
 }
 
 .tab-content.active {
-  display: block;
-  animation: fadeIn var(--transition-normal) var(--ease-out);
+  display: block; /* Shown when active */
 }
 
-/* Toggle Switch - Scientific styling */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Settings tab specific styles */
 .toggle-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  font-size: 14px;
-  padding: var(--size-sm);
-  border-radius: var(--radius-md);
-  background-color: var(--bg-elevated);
-  border: 1px solid var(--border-color);
-  transition: transform var(--transition-normal) var(--ease-out),
-    box-shadow var(--transition-normal) var(--ease-out);
+  padding: var(--size-md) 0;
+  border-bottom: 1px solid var(--border-color-light);
 }
 
-.toggle-container:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+.toggle-container:last-child {
+  border-bottom: none; /* No border for the last item */
 }
 
+.toggle-container span {
+  font-size: 0.95em;
+  color: var(--text-primary);
+}
+
+/* Toggle switch styles */
 .toggle {
   position: relative;
   display: inline-block;
-  width: 46px;
-  height: 24px;
+  width: 44px; /* Reduced width */
+  height: 24px; /* Reduced height */
 }
 
 .toggle input {
@@ -191,7 +123,6 @@ h1 {
   height: 0;
 }
 
-/* Laboratory-inspired slider switch */
 .slider {
   position: absolute;
   cursor: pointer;
@@ -199,24 +130,22 @@ h1 {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: var(--slider-bg);
-  border-radius: 24px;
-  transition: background-color var(--transition-normal);
-  overflow: hidden;
+  background-color: var(--bg-secondary);
+  transition: .3s;
+  border-radius: 24px; /* Adjusted for height */
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 18px;
-  width: 18px;
-  left: 3px;
-  bottom: 3px;
+  height: 18px; /* Reduced size */
+  width: 18px;  /* Reduced size */
+  left: 3px;    /* Adjusted position */
+  bottom: 3px;  /* Adjusted position */
   background-color: white;
+  transition: .3s;
   border-radius: 50%;
-  transition: transform var(--transition-normal) var(--ease-bounce);
-  box-shadow: var(--shadow-sm);
-  z-index: 2;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 input:checked + .slider {
@@ -224,100 +153,105 @@ input:checked + .slider {
 }
 
 input:focus + .slider {
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 1px var(--accent-primary);
 }
 
 input:checked + .slider:before {
-  transform: translateX(22px);
+  transform: translateX(20px); /* Adjusted for new width */
 }
 
-/* Dark/Light mode toggle with scientific symbols */
-.theme-toggle .slider:after {
-  content: "☀️";
-  position: absolute;
-  right: 6px;
-  top: 3px;
-  font-size: 14px;
-  opacity: 0.7;
-  transition: opacity var(--transition-normal);
-}
-
-.theme-toggle input:checked + .slider:after {
-  content: "🌙";
-  left: 6px;
-  right: auto;
-}
-
-.theme-toggle:hover .slider:after {
-  opacity: 1;
-  animation: bounce 1s var(--ease-bounce);
-}
-
-/* About tab content - scientific styling */
+/* About tab specific styles */
 #content-about {
   text-align: center;
+  font-size: 0.9em;
+  line-height: 1.6;
+  color: var(--text-secondary);
 }
 
 #content-about .logo-container {
-  display: flex;
-  justify-content: center;
-  margin: 20px 0;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-  transition: transform var(--transition-normal) var(--ease-bounce);
-}
-
-#content-about .logo-container:hover {
-  transform: scale(1.1) rotate(5deg);
+  margin-bottom: var(--size-md);
 }
 
 #content-about .logo-container img {
-  width: 80px;
-  height: 80px;
-  border-radius: var(--radius-lg);
+  width: 60px;
+  height: 60px;
+  opacity: 0.8;
 }
 
 #content-about p {
-  font-size: 14px;
-  margin-bottom: 16px;
-  line-height: 1.6;
+  margin-bottom: var(--size-sm);
+}
+
+.version {
+  margin-top: var(--size-lg);
+  font-size: 0.8em;
   color: var(--text-secondary);
-  text-align: left;
-  transition: transform var(--transition-normal) var(--ease-out);
+}
+
+/* Shared icon styles for tabs */
+.tabs button [class^="icon-"] {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background-color: currentColor; /* Use tab text color */
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  transition: background-color var(--transition-fast);
+}
+
+.icon-microscope { mask-image: url('../icons/microscope.svg'); }
+.icon-lab { mask-image: url('../icons/lab.svg'); }
+.icon-data { mask-image: url('../icons/data.svg'); }
+.icon-analysis { mask-image: url('../icons/analysis.svg'); }
+
+/* Ensure icons in active tab also take accent color */
+.tabs button.active [class^="icon-"] {
+  background-color: var(--accent-primary);
+}
+
+/* Sonar API Key Section Styles */
+.api-key-container {
+  margin: var(--size-md) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-sm); /* Consistent spacing for elements within the container */
+}
+
+.api-key-container label {
+  font-size: 0.95em; /* Consistent with .toggle-container span */
+  color: var(--text-primary);
+  margin-bottom: var(--size-xs); /* Small gap between label and input field, assuming --size-xs is defined (e.g., 4px or 0.25rem) */
+}
+
+#sonarApiKey {
+  width: 100%;
   padding: var(--size-sm);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 4px); /* Fallback if --radius-sm is not defined */
+  background-color: var(--bg-secondary); /* Matches toggle switch background */
+  color: var(--text-primary);
+  box-sizing: border-box; /* Includes padding and border in the element's width */
+  font-family: var(--font-family-base); /* Ensures font consistency */
 }
 
-#content-about p:hover {
-  transform: translateY(-2px);
-  background-color: var(--bg-elevated);
-  box-shadow: var(--shadow-sm);
+#saveSonarApiKey {
+  padding: var(--size-sm) var(--size-md); /* Standard padding */
+  background-color: var(--accent-primary); /* Primary action color */
+  color: var(--dark-text-primary); /* Text color for contrast on accent; usually white */
+  border: none;
+  border-radius: var(--radius-sm, 4px); /* Fallback if --radius-sm is not defined */
+  cursor: pointer;
+  align-self: flex-start; /* Prevents button from stretching full-width */
+  transition: background-color var(--transition-fast), filter var(--transition-fast);
+  font-family: var(--font-family-base); /* Ensures font consistency */
+  font-weight: var(--font-weight-medium, 500); /* Fallback if --font-weight-medium is not defined */
 }
 
-#content-about .version {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  margin-top: 24px;
-  border-top: 1px solid var(--border-color);
-  padding-top: 12px;
+#saveSonarApiKey:hover {
+  background-color: var(--accent-secondary); /* Hover color from theme variables */
 }
 
-/* Footer */
-.footer {
-  padding: 12px;
-  font-size: 12px;
-  color: var(--text-tertiary);
-  text-align: center;
-  background-color: var(--bg-elevated);
-  border-top: 1px solid var(--border-color);
-}
-
-.footer a {
-  color: var(--accent-primary);
-  text-decoration: none;
-  transition: color var(--transition-fast) var(--ease-out);
-}
-
-.footer a:hover {
-  text-decoration: underline;
-  color: var(--accent-secondary);
+#saveSonarApiKey:active {
+  filter: brightness(85%); /* Visual feedback when button is pressed */
 }

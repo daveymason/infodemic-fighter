@@ -28,7 +28,8 @@
   "host_permissions": [
     "*://www.google.com/search*",
     "*://www.bing.com/search*",
-    "*://duckduckgo.com/*"
+    "*://duckduckgo.com/*",
+    "https://api.perplexity.ai/*"
   ],
   "content_scripts": [
     {

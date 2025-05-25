@@ -12,6 +12,7 @@ A streamlined plan for final submission and future backlog.
 - [ ] Verify persistent popups and version numbering should be 0.1.2
 - [ ] Update the Submission.md withe the new perplexity power-up. Very short justification.
 - [ ] AI-powered perspective find additional sources feature. Same story different Bias. (Enhave the view alternate sources)
+- [ ] Add font-awesome icons via CDN, use in smart places to reduce the cognitive load. Must add to the UX of the app.  
 
 
 ## 4. Post-Launch Roadmap 🛣️

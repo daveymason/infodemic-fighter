@@ -324,6 +324,74 @@
   font-size: 13px;
 }
 
+/* Loading Popup Styles (for context menu operations) */
+.infodemic-loading-popup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--size-lg);
+  min-height: 150px;
+}
+
+.infodemic-loading-popup .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: var(--size-md);
+}
+
+.infodemic-loading-popup p {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Modal Loading Spinner Styles for Context Menu Actions */
+.infodemic-spinner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Darker overlay for more focus */
+    display: flex;
+    flex-direction: column; /* To stack spinner and text */
+    justify-content: center;
+    align-items: center;
+    z-index: 2147483647; /* Ensure it's on top */
+    font-family: var(--font-family-base, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif); /* Use theme font with fallback */
+}
+
+.infodemic-spinner {
+    border: 5px solid rgba(255, 255, 255, 0.3); /* Lighter border for the track */
+    border-top-color: var(--primary-color, #3498db); /* Spinner color, default to a blue if --primary-color not set */
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: infodemic-spin 1s linear infinite;
+}
+
+/* Styling for the loading message text within the overlay */
+.infodemic-spinner-overlay > p {
+    color: var(--text-light, #ffffff); /* Light text color on dark overlay */
+    margin-top: 20px; /* Space between spinner and text */
+    font-size: 16px;
+    font-weight: var(--font-weight-medium, 500);
+    text-align: center;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes infodemic-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
 /* Mobile responsiveness with accessibility considerations */
 @media (max-width: 640px) {
   .infodemic-indicator {

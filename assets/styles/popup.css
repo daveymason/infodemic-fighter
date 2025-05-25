@@ -17,7 +17,7 @@ body {
   background-color: var(--bg-surface);
   color: var(--text-primary);
   transition: background-color var(--transition-normal), color var(--transition-normal);
-  width: 320px;
+  width: 384px; /* Increased width by 20% (320px * 1.2 = 384px) */
   padding: 0;
   line-height: var(--line-height-base);
   box-shadow: var(--shadow-lg);
@@ -141,7 +141,18 @@ h1 {
   font-size: 14px;
   display: inline-block;
   transition: transform var(--transition-fast) var(--ease-bounce);
+  width: 1em; /* Ensure icons have a defined size */
+  height: 1em; /* Ensure icons have a defined size */
+  vertical-align: text-bottom; /* Align icons nicely with text */
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
 }
+
+/* Specific icons - ensure these paths are correct relative to popup.css */
+.icon-microscope { background-image: url('../icons/microscope.svg'); }
+.icon-lab { background-image: url('../icons/lab.svg'); }
+.icon-analysis { background-image: url('../icons/analysis.svg'); } /* New icon for Perplexity */
 
 .tabs button:hover .icon {
   transform: translateY(-2px);
@@ -301,23 +312,145 @@ input:checked + .slider:before {
   padding-top: 12px;
 }
 
-/* Footer */
-.footer {
-  padding: 12px;
-  font-size: 12px;
-  color: var(--text-tertiary);
-  text-align: center;
+/* Perplexity Tab Styles */
+#content-perplexity h2 {
+  font-size: 1.1rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--size-sm);
+  text-align: left;
+}
+
+#content-perplexity > p { /* Direct child p for the main description */
+  font-size: 14px;
+  margin-bottom: var(--size-md);
+  line-height: 1.6;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: var(--size-sm); /* Added padding for hover effect consistency */
+  border-radius: var(--radius-md); /* Added border-radius for hover effect consistency */
+  transition: transform var(--transition-normal) var(--ease-out),
+    background-color var(--transition-normal) var(--ease-out),
+    box-shadow var(--transition-normal) var(--ease-out); /* Added transitions */
+}
+
+#content-perplexity > p:hover { /* Hover effect for main description paragraph */
+  transform: translateY(-2px);
   background-color: var(--bg-elevated);
-  border-top: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 
-.footer a {
-  color: var(--accent-primary);
-  text-decoration: none;
-  transition: color var(--transition-fast) var(--ease-out);
+#content-perplexity .input-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--size-md);
+  padding: var(--size-sm);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  transition: transform var(--transition-normal) var(--ease-out),
+    box-shadow var(--transition-normal) var(--ease-out);
 }
 
-.footer a:hover {
-  text-decoration: underline;
-  color: var(--accent-secondary);
+#content-perplexity .input-group:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+#content-perplexity .input-group label {
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  margin-bottom: var(--size-xs);
+  display: block;
+}
+
+#content-perplexity #perplexity-api-key {
+  width: 100%;
+  padding: var(--size-xs) var(--size-sm);
+  border: 1px solid var(--border-color-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+#content-perplexity #perplexity-api-key:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-primary-faded); /* Subtle focus ring */
+}
+
+/* Primary button style for content areas */
+.button-primary {
+  display: inline-block;
+  background-color: var(--accent-primary);
+  color: white;
+  padding: var(--size-sm) var(--size-md);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  text-align: center;
+  transition: background-color var(--transition-normal), transform var(--transition-fast) var(--ease-out), box-shadow var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+  margin-top: var(--size-xs);
+}
+
+.button-primary:hover {
+  background-color: var(--accent-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.button-primary:active {
+  transform: translateY(0px);
+  background-color: var(--accent-primary-darker);
+  box-shadow: var(--shadow-xs);
+}
+
+/* Info box styling for Perplexity tab */
+#content-perplexity .info-box {
+  margin-top: var(--size-md);
+  padding: var(--size-sm) var(--size-md);
+  background-color: var(--bg-subtle);
+  border-left: 4px solid var(--accent-secondary); /* Accent border */
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  transition: box-shadow var(--transition-normal) var(--ease-out), transform var(--transition-normal) var(--ease-out);
+}
+
+#content-perplexity .info-box:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+#content-perplexity .info-box p {
+  margin-bottom: 0;
+}
+
+#content-perplexity .info-box strong {
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Animations (ensure these are defined in common.css or here if not) */
+@keyframes shimmer {
+  0% { transform: translate(-70%, -70%) rotate(0deg); opacity: 0; }
+  50% { opacity: 0.3; }
+  100% { transform: translate(70%, 70%) rotate(30deg); opacity: 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }

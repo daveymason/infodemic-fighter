@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Infodemic Fighter",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Shows political bias and reliability indicators for news sources in search results",
   "icons": {
     "16": "/assets/icons/icon16.png",
@@ -24,11 +24,11 @@
     "storage",
     "contextMenus",
     "activeTab"
-  ],
-  "host_permissions": [
+  ],  "host_permissions": [
     "*://www.google.com/search*",
     "*://www.bing.com/search*",
-    "*://duckduckgo.com/*"
+    "*://duckduckgo.com/*",
+    "*://api.perplexity.ai/*"
   ],
   "content_scripts": [
     {

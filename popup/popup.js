@@ -6,9 +6,15 @@ const darkModeToggle = document.getElementById('darkMode');
 
 // DOM elements for tabs
 const tabSettings = document.getElementById('tab-settings');
+const tabPerplexity = document.getElementById('tab-perplexity');
 const tabAbout = document.getElementById('tab-about');
 const contentSettings = document.getElementById('content-settings');
+const contentPerplexity = document.getElementById('content-perplexity');
 const contentAbout = document.getElementById('content-about');
+
+// DOM elements for Perplexity tab
+const perplexityApiKeyInput = document.getElementById('perplexity-api-key');
+const savePerplexityKeyButton = document.getElementById('save-perplexity-key');
 
 // Apply dark/light mode
 function applyTheme(isDarkMode) {
@@ -33,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     biasToggle.checked = s.showBiasIndicator ?? true;
     reliabilityToggle.checked = s.showReliabilityIndicator ?? true;
     darkModeToggle.checked = s.darkMode ?? false;
+    perplexityApiKeyInput.value = s.perplexityApiKey || '';
     
     // Apply dark mode if enabled
     applyTheme(s.darkMode);
@@ -45,7 +52,8 @@ function saveSettings() {
     enabled: enabledToggle.checked,
     showBiasIndicator: biasToggle.checked,
     showReliabilityIndicator: reliabilityToggle.checked,
-    darkMode: darkModeToggle.checked
+    darkMode: darkModeToggle.checked,
+    perplexityApiKey: perplexityApiKeyInput.value
   };
   
   console.log('Saving settings:', settings);
@@ -59,20 +67,37 @@ function saveSettings() {
 function switchTab(tabId) {
   // Hide all tab contents
   contentSettings.classList.remove('active');
+  contentPerplexity.classList.remove('active');
   contentAbout.classList.remove('active');
   
   // Remove active class from all tab buttons
   tabSettings.classList.remove('active');
+  tabPerplexity.classList.remove('active');
   tabAbout.classList.remove('active');
   
   // Show selected tab content and set tab as active
   if (tabId === 'settings') {
     contentSettings.classList.add('active');
     tabSettings.classList.add('active');
+  } else if (tabId === 'perplexity') {
+    contentPerplexity.classList.add('active');
+    tabPerplexity.classList.add('active');
   } else if (tabId === 'about') {
     contentAbout.classList.add('active');
     tabAbout.classList.add('active');
   }
+}
+
+// Save Perplexity API Key
+function savePerplexityApiKey() {
+  const apiKey = perplexityApiKeyInput.value;
+  chrome.storage.local.get('settings', (data) => {
+    const s = data.settings || {};
+    s.perplexityApiKey = apiKey;
+    chrome.storage.local.set({ settings: s }, () => {
+      console.log('Perplexity API key saved');
+    });
+  });
 }
 
 // Generic listener assignment for toggle switches
@@ -82,4 +107,8 @@ function switchTab(tabId) {
 
 // Tab event listeners
 tabSettings.addEventListener('click', () => switchTab('settings'));
+tabPerplexity.addEventListener('click', () => switchTab('perplexity'));
 tabAbout.addEventListener('click', () => switchTab('about'));
+
+// Perplexity API Key save button listener
+savePerplexityKeyButton.addEventListener('click', savePerplexityApiKey);

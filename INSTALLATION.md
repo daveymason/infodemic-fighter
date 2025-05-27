@@ -30,7 +30,7 @@ This document provides detailed instructions for installing and using the Infode
 
 ### Method 2: Chrome Web Store (Coming Soon)
 
-1. Visit the Chrome Web Store page for Infodemic Fighter
+1. Visit the Chrome Web Store page for Infodemic Fighter https://chromewebstore.google.com/detail/infodemic-fighter/ebcmohgfdgkadgokpmoaeneeebnfkfbo
 2. Click "Add to Chrome"
 3. Confirm the installation when prompted
 

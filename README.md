@@ -26,7 +26,7 @@ A lightweight Chrome extension that adds subtle bias and reliability indicators 
 
 ## The Problem We're Solving
 
-In today's digital landscape, we face an "infodemic" - an overabundance of information that makes it difficult to find trustworthy sources. This creates:
+Our society today is zombie walking into a problem that we thought only existed during COVID: the "infodemic" - an overabundance of information that makes it difficult to think critically and find trustworthy sources. This creates:
 
 - 🌐 Information overload preventing effective credibility evaluation
 - 🔄 Media polarization creating siloed information ecosystems  

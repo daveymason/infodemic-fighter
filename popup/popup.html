@@ -16,10 +16,13 @@
     <!-- Scientific Tab Navigation -->
     <div class="tabs">
       <button id="tab-settings" class="active">
-        <span class="icon-microscope"></span>Settings
+        <span class="icon icon-microscope"></span>Settings
+      </button>
+      <button id="tab-perplexity">
+        <span class="icon icon-analysis"></span>Perplexity
       </button>
       <button id="tab-about">
-        <span class="icon-lab"></span>About
+        <span class="icon icon-lab"></span>About
       </button>
     </div>
     
@@ -62,6 +65,20 @@
       </div>
     </div>
     
+    <!-- Perplexity Tab -->
+    <div id="content-perplexity" class="tab-content">
+      <h2>Perplexity API Integration</h2>
+      <p>Integrate your Perplexity API key to enable the "Follow the Money" feature. This helps identify the funding sources of websites.</p>
+      <div class="input-group">
+        <label for="perplexity-api-key">Perplexity API Key:</label>
+        <input type="password" id="perplexity-api-key" placeholder="Enter your API key">
+      </div>
+      <button id="save-perplexity-key" class="button-primary">Save Key</button>
+      <div class="info-box">
+        <p><strong>Note:</strong> Your API key is stored securely in local browser storage and is only used for the "Follow the Money" feature.</p>
+      </div>
+    </div>
+    
     <!-- About Tab with scientific copy -->
     <div id="content-about" class="tab-content">
       <div class="logo-container">
@@ -69,7 +86,7 @@
       </div>
       <p>Infodemic Fighter applies scientific methodology to help researchers, academics, and critical thinkers navigate the information landscape by providing objective indicators of media bias and reliability.</p>
       <p>Our algorithm analyzes historical data patterns to identify factual reporting standards and political orientation of news sources, all displayed through a clear, evidence-based interface.</p>
-      <div class="version">Infodemic Fighter v0.1.0</div>
+      <div class="version">Infodemic Fighter v0.1.2</div>
     </div>
   </div>
 

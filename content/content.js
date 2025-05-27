@@ -13,8 +13,6 @@
   window.infodemicFighterLoaded = true;
   
   console.log('Infodemic Fighter content script loaded');
-
-  // Remove FontAwesome dependency per TODO.md
   
   // Set up a registry to track processed domains and URLs
   const processedDomains = new Set();
@@ -89,27 +87,6 @@
         closeButton.addEventListener('click', removeExistingPopup);
       }
       
-      // Add a click event on the container to close when clicking outside
-      const popupContainer = document.getElementById('infodemic-container');
-      if (popupContainer) {
-        popupContainer.addEventListener('click', function(e) {
-          if (e.target === popupContainer) {
-            removeExistingPopup();
-          }
-        });
-      }
-      
-      // Auto close after 15 seconds
-      clearTimeout(autoCloseTimer);
-      autoCloseTimer = setTimeout(removeExistingPopup, 15000);
-      
-      // Add a window click listener to close the popup
-      setTimeout(() => {
-        if (popupActive) {
-          window.addEventListener('click', windowClickHandler);
-        }
-      }, 100);
-      
     } catch (error) {
       console.error('Error injecting popup:', error);
     }
@@ -127,54 +104,53 @@
       popupActive = false;
       clearTimeout(autoCloseTimer);
       
-      // Remove window click handler
-      window.removeEventListener('click', windowClickHandler);
     } catch (error) {
       console.error('Error removing popup:', error);
     }
   }
   
-  // Handler for window clicks (to dismiss popup when clicking outside)
-  function windowClickHandler(event) {
-    const popup = document.getElementById('infodemic-popup');
-    if (popup && !popup.contains(event.target)) {
-      removeExistingPopup();
-    }
-  }
-
   // Detect which search engine we're on
   function detectSearchEngine() {
     const url = window.location.href;
     
-    if (url.includes('google.com/search')) {
+    // Check if search engine specific functions are available
+    // These are loaded from separate search-engine specific files
+    if (url.includes('google.com/search') && typeof processGoogleSearch === 'function') {
+      console.log('Using Google-specific search processor');
       processGoogleSearch();
-    } else if (url.includes('bing.com/search')) {
+    } else if (url.includes('bing.com/search') && typeof processBingSearch === 'function') {
+      console.log('Using Bing-specific search processor');
       processBingSearch();
-    } else if (url.includes('duckduckgo.com')) {
+    } else if (url.includes('duckduckgo.com') && typeof processDuckDuckGoSearch === 'function') {
+      console.log('Using DuckDuckGo-specific search processor');
       processDuckDuckGoSearch();
+    } else {
+      // Fallback to generic processing if search engine specific functions are not available
+      console.log('Using generic search processor');
+      processGenericSearch();
     }
   }
 
-  // Process Google search results
-  function processGoogleSearch() {
-    console.log('Processing Google search results');
+  // Generic search processing as fallback
+  function processGenericSearch() {
+    console.log('Processing search results with generic method');
     
     // Find all links that point to external websites
-    const allLinks = document.querySelectorAll('a[href^="http"]:not([href*="google.com"])');
+    const allLinks = document.querySelectorAll('a[href^="http"]:not([href*="google.com"]):not([href*="bing.com"]):not([href*="duckduckgo.com"])');
     
     for (const link of allLinks) {
       // Get the URL and domain
       const url = link.href;
       const domain = extractDomain(url);
       
-      // Skip if we've already processed this domain or URL
-      if (!domain || processedDomains.has(domain) || processedURLs.has(url)) {
+      // Skip if we've already processed this domain or URL, or if an indicator already exists
+      if (!domain || processedDomains.has(domain) || processedURLs.has(url) || link.closest('.infodemic-indicator')) {
         continue;
       }
       
       // Find the container for this result (h3 or parent div)
       const container = link.closest('h3') || link.closest('div[data-hveid]') || 
-                       link.closest('.g') || link.closest('.MjjYud');
+                       link.closest('.g') || link.closest('.MjjYud') || link.closest('.b_algo') || link.closest('.result');
       
       if (!container || container.querySelector('.infodemic-indicator')) {
         continue;
@@ -190,18 +166,6 @@
     
     // Set up mutation observer for dynamic content
     setupMutationObserver();
-  }
-
-  // Process Bing search results
-  function processBingSearch() {
-    const searchResults = document.querySelectorAll('.b_algo');
-    processResults(searchResults);
-  }
-
-  // Process DuckDuckGo search results
-  function processDuckDuckGoSearch() {
-    const searchResults = document.querySelectorAll('.result');
-    processResults(searchResults);
   }
 
   // Generic function to process a list of result containers
@@ -308,16 +272,17 @@
               const url = link.href;
               const domain = extractDomain(url);
               
-              // Skip if we've already processed this domain or URL
-              if (!domain || processedDomains.has(domain) || processedURLs.has(url)) {
-                continue;
-              }
-              
               // Find the container for this result (h3 or parent div)
+              // Important: Check for existing indicator *before* adding to processed sets
               const container = link.closest('h3') || link.closest('div[data-hveid]') || 
                                link.closest('.g') || link.closest('.MjjYud');
               
               if (!container || container.querySelector('.infodemic-indicator')) {
+                continue;
+              }
+
+              // Skip if we've already processed this domain or URL
+              if (!domain || processedDomains.has(domain) || processedURLs.has(url)) {
                 continue;
               }
               

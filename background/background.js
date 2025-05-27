@@ -43,7 +43,6 @@ chrome.runtime.onInstalled.addListener(() => {
       contexts: ["link"]
     });
     
-    // Simplified menu options - only 2 distinct actions
     chrome.contextMenus.create({
       id: "visualizeBias",
       parentId: "infodemicFighterMenu",
@@ -55,6 +54,13 @@ chrome.runtime.onInstalled.addListener(() => {
       id: "findAlternativeSources",
       parentId: "infodemicFighterMenu",
       title: "Find Alternative Sources",
+      contexts: ["link"]
+    });
+    
+    chrome.contextMenus.create({
+      id: "followTheMoney",
+      parentId: "infodemicFighterMenu",
+      title: "Follow The Money",
       contexts: ["link"]
     });
   });
@@ -82,6 +88,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         break;
       case "findAlternativeSources":
         showAlternativeSources(tab.id, url, biasData);
+        break;
+      case "followTheMoney":
+        handleFollowTheMoney(tab.id, url);
         break;
     }
   } catch (error) {
@@ -431,7 +440,7 @@ function createCombinedBiasVisualization(biasData, settings) {
         </div>
         <div class="infodemic-footer">
           <div>Infodemic Fighter</div>
-          <div>v0.1.0</div>
+          <div>v${chrome.runtime.getManifest().version}</div>
         </div>
       </div>
     </div>
@@ -469,21 +478,50 @@ function showAlternativeSources(tabId, url, biasData) {
 
 // Helper function to send popup to content script
 function sendPopupToContentScript(tabId, popupHTML) {
-  // Simply use try/catch with the regular sendMessage
-  try {
-    chrome.tabs.sendMessage(tabId, {
-      type: 'SHOW_BIAS_POPUP',
-      html: popupHTML
-    }, (response) => {
-      if (chrome.runtime.lastError) {
-        console.log("Content script not available on this page. This is normal on non-search pages.");
-        // The user is likely on a page where our content script isn't loaded
-        // This happens when right-clicking on non-search engine pages
-      }
-    });
-  } catch (error) {
-    console.error("Error sending message:", error);
-  }
+  chrome.tabs.get(tabId, (tab) => {
+    if (chrome.runtime.lastError || !tab) {
+      console.error("Could not get tab information:", chrome.runtime.lastError?.message);
+      // Fallback or error notification to user if tab is inaccessible
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: '../assets/icons/icon48.png',
+        title: 'Infodemic Fighter Error',
+        message: 'Could not display information overlay on the current page.'
+      });
+      return;
+    }
+
+    // Check if the content script is likely to be running on this tab
+    // This is a heuristic. For more robust checking, the content script could send a PING
+    // upon loading, and the background script could track active tabs.
+    if (tab.url && (tab.url.startsWith('http:') || tab.url.startsWith('https:'))) {
+      chrome.tabs.sendMessage(tabId, {
+        type: 'SHOW_BIAS_POPUP',
+        html: popupHTML
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.log("Error sending message to content script:", chrome.runtime.lastError.message, "on URL:", tab.url);
+          // If sending fails, it might be because the content script isn't injected.
+          // This can happen on pages where the extension doesn't have permission
+          // or on special pages like chrome:// or file://.
+          // Consider a notification or alternative display method if critical.
+        } else if (response && response.success) {
+          console.log("Popup displayed successfully by content script.");
+        } else {
+          console.log("Content script did not acknowledge popup display.");
+        }
+      });
+    } else {
+      console.log("Content script not messaged: Tab URL is not http/https.", tab.url);
+      // Optionally, notify the user that the feature isn't available on this page.
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: '../assets/icons/icon48.png',
+        title: 'Infodemic Fighter',
+        message: 'This feature is not available on the current page.'
+      });
+    }
+  });
 }
 
 // Create comprehensive source analysis popup (combines bias and reliability)
@@ -598,7 +636,7 @@ function createSourceAnalysisPopup(biasData, settings) {
         </div>
         <div class="infodemic-footer">
           <div>Infodemic Fighter</div>
-          <div>v0.1.0</div>
+          <div>v${chrome.runtime.getManifest().version}</div>
         </div>
       </div>
     </div>
@@ -617,7 +655,7 @@ function createDataVisualizationPopup(biasData, settings) {
     .bias-spectrum {
       position: relative;
       height: 40px;
-      background: linear-gradient(to right, var(--color-blue-pill), #78D1FF, var(--data-center), #C76363, var(--color-red-pill));
+      background: linear-gradient(to right, var(--color-blue-pill), #78D1FF, #C76363, var(--color-red-pill));
       border-radius: 4px;
       margin-bottom: 10px;
     }
@@ -805,7 +843,7 @@ function createDataVisualizationPopup(biasData, settings) {
         </div>
         <div class="infodemic-footer">
           <div>Infodemic Fighter</div>
-          <div>v0.1.0</div>
+          <div>v${chrome.runtime.getManifest().version}</div>
         </div>
       </div>
     </div>
@@ -931,7 +969,7 @@ function createAlternativeSourcesPopup(biasData, alternatives, settings) {
         </div>
         <div class="infodemic-footer">
           <div>Infodemic Fighter</div>
-          <div>v0.1.0</div>
+          <div>v${chrome.runtime.getManifest().version}</div>
         </div>
       </div>
     </div>
@@ -940,42 +978,127 @@ function createAlternativeSourcesPopup(biasData, alternatives, settings) {
   return html;
 }
 
-// Get shared popup styles matching the main extension popup style
+// Get shared popup styles matching the main extension popup
 function getPopupStyles(theme) {
   return `
     #infodemic-container {
       position: fixed;
-      z-index: 10000;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      z-index: 2147483647; /* Max z-index */
+      top: 20px; /* Position from top */
+      right: 20px; /* Position from right */
+      transform: none; /* Remove transform if positioning top-right */
       font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif);
     }
     
-    .infodemic-popup {
-      background: var(--bg-elevated);
-      color: var(--text-primary);
-      border-radius: 8px;
-      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.3);
-      width: 450px;
+    /* Apply theme-specific CSS variables */
+    #infodemic-container.dark-mode {
+      --bg-surface: #1a1a1a;
+      --bg-elevated: #2d2d2d;
+      --bg-subtle: #404040;
+      --text-primary: #ffffff;
+      --text-secondary: #cccccc;
+      --text-tertiary: #999999;
+      --border-color: #555555;
+      --border-color-strong: #666666;
+      --section-bg: #333333;
+      --info-bg: #1e3a5f;
+      --info-border: #2980b9;
+      --info-text: #74c0fc;
+      --info-text-secondary: #a8dadc;
+      --findings-bg: #3d3a00;
+      --findings-border: #857900;
+      --findings-text: #f9ca24;
+      --findings-text-secondary: #f0c419;
+      --gauge-bg: #555555;
+    }
+    
+    #infodemic-container.light-mode {
+      --bg-surface: #ffffff;
+      --bg-elevated: #ffffff;
+      --bg-subtle: #f8f9fa;
+      --text-primary: #212529;
+      --text-secondary: #6c757d;
+      --text-tertiary: #495057;
+      --border-color: #e9ecef;
+      --border-color-strong: #d1d5db;
+      --section-bg: #f8f9fa;
+      --info-bg: #e7f3ff;
+      --info-border: #b3d9ff;
+      --info-text: #0056b3;
+      --info-text-secondary: #004085;
+      --findings-bg: #fff3cd;
+      --findings-border: #ffeaa7;
+      --findings-text: #856404;
+      --findings-text-secondary: #856404;
+      --gauge-bg: #e9ecef;
+    }
+    
+    .infodemic-popup-container { /* Added for consistent outer styling if needed */
+        /* Styles for the outermost container if you want to differentiate it */
+    }    
+    
+    .infodemic-popup { /* Match the HTML class name */
+      background: var(--bg-elevated, #ffffff);
+      color: var(--text-primary, #333333);
+      border-radius: var(--radius-lg, 12px); /* Larger radius */
+      box-shadow: var(--shadow-xl, 0 8px 32px rgba(0,0,0,0.2)); /* Deeper shadow */
+      width: 550px; /* Increased width */
       max-height: 90vh;
-      overflow: auto;
-      animation: infodemicFadeIn 0.3s ease-out;
-      border: 1px solid var(--border-color);
+      overflow-y: auto; /* Changed to overflow-y */
+      animation: infodemicFadeIn 0.3s var(--ease-out, ease-out);
+      border: 1px solid var(--border-color-strong, #d1d5db); /* Stronger border */
+      display: flex; /* Added flex for layout */
+      flex-direction: column; /* Stack elements vertically */
+    }
+    
+    .infodemic-spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid var(--bg-subtle, #f3f3f3); /* Light grey for the track */
+      border-top: 5px solid var(--color-blue-pill, #007bff); /* Blue for the spinner */
+      border-right: 5px solid var(--color-red-pill, #dc3545); /* Red for the spinner */
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
     
     @keyframes infodemicFadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translateY(-10px) scale(0.98); } /* Adjusted animation */
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    .infodemic-close-button { /* Styling for the close button */
+        background: transparent;
+        border: none;
+        font-size: 24px; /* Larger size */
+        color: var(--text-secondary);
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        cursor: pointer;
+        padding: 5px;
+        line-height: 1;
+        transition: color var(--transition-fast) var(--ease-out), transform var(--transition-fast) var(--ease-out);
+    }
+
+    .infodemic-close-button:hover {
+        color: var(--text-primary);
+        transform: scale(1.1);
     }
     
     .infodemic-header {
-      background: linear-gradient(135deg, var(--color-red-pill), var(--color-blue-pill));
+      background: linear-gradient(135deg, #dc3545, #007bff);
       color: white;
       padding: 12px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
     }
     
     .infodemic-title {
@@ -987,158 +1110,88 @@ function getPopupStyles(theme) {
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
-    .infodemic-title .icon-microscope::before,
-    .infodemic-title .icon-data::before,
-    .infodemic-title .icon-lab::before,
-    .infodemic-title .icon-analysis::before {
-      content: "";
-      display: inline-block;
-      width: 18px;
-      height: 18px;
-      background-color: white;
-      mask-size: contain;
-      mask-repeat: no-repeat;
-      mask-position: center;
-      margin-right: 8px;
-    }
-    
-    .infodemic-title .icon-microscope::before {
-      mask-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18h8"></path><path d="M3 22h18"></path><path d="M14 22a2 2 0 0 1-2-2"></path><path d="M10 22a2 2 0 0 0 2-2"></path><path d="M10 14v4"></path><path d="M13 14h-3"></path><circle cx="12" cy="9" r="2"></circle><path d="M12 3v4"></path><path d="M10 7.25c.69.13 1.3.25 2 .25s1.31-.12 2-.25"></path><path d="M15 11.15l2.5 2.35"></path></svg>');
-    }
-    
-    .infodemic-title .icon-data::before {
-      mask-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="9" y1="9" x2="9" y2="15"></line><line x1="15" y1="9" x2="15" y2="15"></line><line x1="9" y1="15" x2="15" y2="15"></line><line x1="9" y1="9" x2="15" y2="9"></line><path d="M9 9v6l3 -4l3 4v-6"></path></svg>');
-    }
-    
-    .infodemic-title .icon-analysis::before {
-      mask-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"></path><path d="M5 20v-6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6"></path><path d="M5 14l7-7 7 7"></path><path d="M12 4v3"></path></svg>');
-    }
-    
     .infodemic-close {
       background: none;
       border: none;
       color: white;
-      font-size: 16px;
+      font-size: 18px;
       cursor: pointer;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      transition: background-color 0.15s;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
     }
     
     .infodemic-close:hover {
-      background-color: rgba(255, 255, 255, 0.2);
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .infodemic-title .icon-microscope::before,
+    .infodemic-title .icon-data::before,
+    .infodemic-title .icon-lab::before,
+    .infodemic-title .icon-analysis::before { /* Added .icon-analysis */
+      content: '🔍'; /* Simple emoji fallback */
+      display: inline-block;
+      margin-right: 8px;
+      font-size: 16px;
+    }
+
+    .infodemic-title .icon-analysis::before { 
+      content: '💰'; /* Money emoji for Follow the Money */
     }
     
     .infodemic-content {
-      padding: 16px;
-      border-bottom: 1px solid var(--border-color);
-    }
+      padding: 20px; /* Increased padding */
+      flex-grow: 1; /* Allow content to take available space */
+      overflow-y: auto; /* Ensure content area is scrollable if needed */
+      line-height: 1.6;
+    }    
     
+    .infodemic-content p {
+      margin: 0 0 12px 0;
+      color: var(--text-primary);
+    }
+
+    .infodemic-content a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .infodemic-content a:hover {
+      text-decoration: underline;
+    }
+
     .infodemic-source-name {
-      font-size: 18px;
-      font-weight: 500;
-      margin-bottom: 16px;
-      word-break: break-word;
-    }
-    
-    .infodemic-section {
-      margin-bottom: 16px;
-      padding: 12px;
-      background-color: var(--bg-surface);
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-    }
-    
-    .section-title {
       font-weight: 600;
-      margin-bottom: 10px;
-      font-size: 15px;
-      color: var(--text-primary);
-    }
-    
-    .section-description {
-      font-size: 14px;
-      line-height: 1.4;
-      margin-top: 8px;
       color: var(--text-secondary);
-    }
-    
-    .infodemic-badge-container {
-      display: flex;
-      justify-content: center;
-      margin: 10px 0;
-    }
-    
-    .infodemic-badge {
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 500;
-      color: white;
-      display: inline-block;
-    }
-    
-    .infodemic-tip {
-      font-size: 13px;
-      line-height: 1.5;
-      margin: 16px 0 0 0;
-      padding: 12px;
-      border-radius: 8px;
-      background-color: var(--bg-surface);
-      color: var(--text-secondary);
-      border: 1px solid var(--border-color);
-    }
-    
-    .infodemic-tip strong {
-      color: var(--text-primary);
-    }
-    
-    .infodemic-current {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-    
-    .current-label {
-      color: var(--text-secondary);
+      margin-bottom: 12px;
       font-size: 14px;
     }
-    
-    .infodemic-description {
-      font-size: 14px;
-      line-height: 1.4;
-      margin: 12px 0;
-      color: var(--text-secondary);
+
+    .funding-info-content { /* Specific styling for funding info paragraph */
+        padding: 16px;
+        background-color: var(--section-bg);
+        border-radius: 8px;
+        margin-top: 12px;
+        border: 1px solid var(--border-color);
     }
-    
-    .alternatives-list {
-      margin-top: 16px;
-    }
-    
-    .no-alternatives {
-      padding: 12px;
-      text-align: center;
-      color: var(--text-secondary);
-      background-color: var(--bg-surface);
-      border-radius: 6px;
-      border: 1px solid var(--border-color);
+
+    .funding-info-content p {
+        margin: 0;
+        line-height: 1.6;
+        color: var(--text-secondary);
     }
     
     .infodemic-footer {
       padding: 12px 16px;
-      background-color: var(--bg-surface);
+      background-color: var(--bg-subtle);
       font-size: 12px;
-      color: var(--text-secondary);
+      color: var(--text-tertiary);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+      border-top: 1px solid var(--border-color);
     }
   `;
 }
@@ -1581,4 +1634,537 @@ function getUnknownBiasData(url) {
     reliability: 'unknown',
     name: name
   };
+}
+
+// Function to handle "Follow The Money" action
+function handleFollowTheMoney(tabId, url) {
+  chrome.storage.local.get(['settings'], (result) => {
+    const settings = result.settings;
+    
+    // Immediately show loading popup
+    const loadingPopupHTML = createLoadingPopup(settings);
+    sendPopupToContentScript(tabId, loadingPopupHTML);
+
+    const apiKey = settings && settings.perplexityApiKey;
+    if (!apiKey) {
+      // Notify user that API key is needed
+      const popupHTML = createApiKeyNeededPopup(settings);
+      sendPopupToContentScript(tabId, popupHTML);
+      return;
+    }
+    // Proceed with Perplexity API call
+    fetchPerplexityData(tabId, url, apiKey);
+  });
+}
+
+// Function to create a popup indicating API key is needed
+function createApiKeyNeededPopup(settings) {
+  const theme = settings?.darkMode ? 'dark-mode' : 'light-mode';
+  const styles = getPopupStyles(theme);
+  const version = chrome.runtime.getManifest().version;
+  
+  return `
+    <div id="infodemic-container">
+      <style>
+        ${styles}
+        .infodemic-spinner-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 150px; /* Ensure popup has some height */
+        }
+      </style>
+      <div class="infodemic-popup" id="infodemic-popup">
+        <div class="infodemic-header">
+          <div class="infodemic-title">
+            <span class="icon-analysis"></span>
+            API Key Required
+          </div>
+          <button class="infodemic-close" id="infodemic-close">✕</button>
+        </div>        <div class="infodemic-content">
+          <p>Please add your Perplexity API key in the extension settings to use the "Follow the Money" feature.</p>
+          <p style="margin-top: 12px; font-size: 13px; color: #6c757d;">
+            You can get an API key from <a href="https://www.perplexity.ai/hub" target="_blank" style="color: #007bff;">Perplexity's API Hub</a>.
+          </p>
+        </div>
+        <div class="infodemic-footer">
+          <div>Infodemic Fighter</div>
+          <div>v${chrome.runtime.getManifest().version}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Function to create a loading popup
+function createLoadingPopup(settings) {
+  const theme = settings?.darkMode ? 'dark-mode' : 'light-mode';
+  const styles = getPopupStyles(theme);
+  const version = chrome.runtime.getManifest().version;
+
+  return `
+    <div id="infodemic-container">
+      <style>
+        ${styles}
+        .infodemic-spinner-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 150px; /* Ensure popup has some height */
+        }
+      </style>
+      <div class="infodemic-popup" id="infodemic-popup">
+        <div class="infodemic-header">
+          <div class="infodemic-title">
+            <span class="icon-analysis"></span>
+            Fetching Information
+          </div>
+          <button class="infodemic-close" id="infodemic-close">✕</button>
+        </div>
+        <div class="infodemic-content">
+          <div class="infodemic-spinner-container">
+            <div class="infodemic-spinner"></div>
+          </div>
+          <p style="text-align: center; margin-top: 10px; color: var(--text-secondary, #6c757d);">Please wait...</p>
+        </div>
+        <div class="infodemic-footer">
+          <div>Infodemic Fighter</div>
+          <div>v${chrome.runtime.getManifest().version}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Function to fetch data from Perplexity API
+async function fetchPerplexityData(tabId, siteUrl, apiKey) {
+  const prompt = `Analyze the funding and ownership of the website: ${siteUrl}. Provide information in this exact JSON format:
+
+{
+  "registeredOwner": "[company/individual name or 'Not disclosed' if unknown]",
+  "parentCompany": "[parent organization name or 'Independent' if none]",
+  "fundingSources": ["source1", "source2", "source3"],
+  "majorInvestors": ["investor1", "investor2"],
+  "politicalAffiliations": "[political connections/donations or 'None identified']",
+  "advertisingModel": "[subscription/advertising/donations/mixed or 'Unknown']",
+  "fundingTransparency": "[High/Medium/Low/Unknown]",
+  "conflictsOfInterest": "[potential conflicts or 'None identified']",
+  "influenceRisk": "[High/Medium/Low]",
+  "riskExplanation": "[brief explanation of why this risk level]",
+  "transparencyScore": [1-10],
+  "keyFindings": ["finding1", "finding2", "finding3"]
+}
+
+Respond ONLY with valid JSON. If information is not available, use the placeholder values shown.`;
+  
+  // Get settings for consistent theming
+  chrome.storage.local.get(['settings'], (result) => {
+    const settings = result.settings;
+    
+    (async () => {
+      try {
+        const response = await fetch('https://api.perplexity.ai/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+          },          body: JSON.stringify({
+            model: 'llama-3.1-sonar-small-128k-online', // Updated to current Perplexity model
+            messages: [
+              { 
+                role: 'system', 
+                content: 'You are a research assistant. Provide concise, factual information based on the user\'s query. Structure your response strictly according to the user\'s specified format.' 
+              },
+              { 
+                role: 'user', 
+                content: prompt 
+              }
+            ],
+            max_tokens: 500, // Increased limit for structured response
+            temperature: 0.1, // Low temperature for factual responses
+            stream: false
+          })
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Perplexity API error response:', errorText);
+          throw new Error(`Perplexity API error: ${response.status} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        
+        // Check if response has expected structure
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+          console.error('Unexpected API response structure:', data);
+          throw new Error('Invalid response format from Perplexity API');
+        }
+          const fundingInfo = data.choices[0].message.content;
+        
+        // Parse the JSON response
+        let parsedFundingData;
+        try {
+          parsedFundingData = parseFundingData(fundingInfo);
+        } catch (parseError) {
+          console.error('Error parsing funding data:', parseError);
+          // Fallback to plain text display if JSON parsing fails
+          parsedFundingData = {
+            error: true,
+            rawContent: fundingInfo
+          };
+        }
+        
+        const popupHTML = createFundingInfoPopup(siteUrl, parsedFundingData, settings);
+        sendPopupToContentScript(tabId, popupHTML);
+        
+      } catch (error) {
+        console.error('Error fetching Perplexity data:', error);
+          // Create more specific error message
+        let errorMessage = "Error fetching funding information. ";
+        if (error.message.includes('401')) {
+          errorMessage += "Please check your API key in settings.";
+        } else if (error.message.includes('429')) {
+          errorMessage += "Rate limit exceeded. Please try again later.";
+        } else if (error.message.includes('400')) {
+          errorMessage += "Invalid request format. Please try again.";
+        } else {
+          errorMessage += "Please try again later.";
+        }
+        
+        const popupHTML = createErrorPopup(errorMessage, settings);
+        sendPopupToContentScript(tabId, popupHTML);
+      }    })();
+  });
+}
+
+// Function to parse funding data from API response
+function parseFundingData(responseContent) {
+  try {
+    // Try to extract JSON from the response
+    let jsonString = responseContent.trim();
+    
+    // Remove any markdown code block formatting if present
+    if (jsonString.startsWith('```json')) {
+      jsonString = jsonString.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (jsonString.startsWith('```')) {
+      jsonString = jsonString.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+    
+    const parsed = JSON.parse(jsonString);
+    
+    // Validate required fields and provide defaults
+    return {
+      registeredOwner: parsed.registeredOwner || 'Not disclosed',
+      parentCompany: parsed.parentCompany || 'Independent',
+      fundingSources: Array.isArray(parsed.fundingSources) ? parsed.fundingSources : ['Unknown'],
+      majorInvestors: Array.isArray(parsed.majorInvestors) ? parsed.majorInvestors : [],
+      politicalAffiliations: parsed.politicalAffiliations || 'None identified',
+      advertisingModel: parsed.advertisingModel || 'Unknown',
+      fundingTransparency: parsed.fundingTransparency || 'Unknown',
+      conflictsOfInterest: parsed.conflictsOfInterest || 'None identified',
+      influenceRisk: parsed.influenceRisk || 'Unknown',
+      riskExplanation: parsed.riskExplanation || 'Risk assessment unavailable',
+      transparencyScore: typeof parsed.transparencyScore === 'number' ? parsed.transparencyScore : 0,
+      keyFindings: Array.isArray(parsed.keyFindings) ? parsed.keyFindings : ['Analysis in progress']
+    };
+  } catch (error) {
+    console.error('Failed to parse funding data as JSON:', error);
+    throw error;
+  }
+}
+
+// Function to create a popup with funding information
+function createFundingInfoPopup(url, fundingData, settings) {
+  const theme = settings?.darkMode ? 'dark-mode' : 'light-mode';
+  const styles = getPopupStyles(theme);
+  const version = chrome.runtime.getManifest().version;
+    // Handle error case (fallback to plain text)
+  if (fundingData.error) {
+    return `
+      <div id="infodemic-container" class="${theme}">
+        <style>${styles}</style>
+        <div class="infodemic-popup" id="infodemic-popup">
+          <div class="infodemic-header">
+            <div class="infodemic-title">
+              <span class="icon-analysis"></span>
+              Funding Information
+            </div>
+            <button class="infodemic-close" id="infodemic-close">✕</button>
+          </div>
+          <div class="infodemic-content">
+            <div class="infodemic-source-name">${url}</div>
+            <div class="funding-info-content">
+              <p>${fundingData.rawContent}</p>
+            </div>
+          </div>
+          <div class="infodemic-footer">
+            <div>Infodemic Fighter</div>
+            <div>v${chrome.runtime.getManifest().version}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Get display name for the site
+  let siteName = url;
+  try {
+    const urlObj = new URL(url);
+    siteName = urlObj.hostname.replace(/^www\./, '');
+  } catch (e) {
+    // Use url as is
+  }
+  
+  // Determine risk level color and icon
+  const getRiskDisplay = (level) => {
+    switch(level.toLowerCase()) {
+      case 'high': return { color: '#dc3545', icon: '⚠️', text: 'High Risk' };
+      case 'medium': return { color: '#fd7e14', icon: '⚡', text: 'Medium Risk' };
+      case 'low': return { color: '#28a745', icon: '✓', text: 'Low Risk' };
+      default: return { color: '#6c757d', icon: '?', text: 'Unknown Risk' };
+    }
+  };
+  
+  const riskDisplay = getRiskDisplay(fundingData.influenceRisk);
+  
+  // Create transparency score gauge
+  const createScoreGauge = (score) => {
+    const percentage = Math.max(0, Math.min(100, score * 10)); // Convert 1-10 to percentage
+    const color = score >= 7 ? '#28a745' : score >= 4 ? '#fd7e14' : '#dc3545';
+    return `
+      <div class="transparency-gauge">
+        <div class="gauge-container">
+          <div class="gauge-fill" style="width: ${percentage}%; background-color: ${color};"></div>
+        </div>
+        <span class="gauge-text">${score}/10</span>
+      </div>
+    `;
+  };
+    return `
+    <div id="infodemic-container" class="${theme}">
+      <style>
+        ${styles}
+        
+        .funding-section {
+          margin-bottom: 16px;
+          padding: 12px;
+          border-radius: 8px;
+          background-color: var(--section-bg, #f8f9fa);
+          border: 1px solid var(--border-color, #e9ecef);
+        }
+        
+        .funding-section h4 {
+          margin: 0 0 8px 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--text-primary, #212529);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        
+        .funding-section p, .funding-section ul {
+          margin: 0;
+          font-size: 13px;
+          line-height: 1.4;
+          color: var(--text-secondary, #6c757d);
+        }
+        
+        .funding-section ul {
+          padding-left: 16px;
+        }
+        
+        .funding-section li {
+          margin-bottom: 2px;
+               }
+        
+        .risk-indicator {
+          display: flex;
+          align-items: center;
+          gap:  8px;
+          padding: 8px 12px;
+          border-radius: 6px;
+          background-color: ${riskDisplay.color}15;
+          border: 1px solid ${riskDisplay.color}40;
+          margin-bottom: 12px;
+        }
+        
+        .risk-icon {
+          font-size: 16px;
+        }
+        
+        .risk-text {
+          font-weight: 600;
+          color: ${riskDisplay.color};
+          font-size: 14px;
+        }
+        
+        .transparency-gauge {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        
+        .gauge-container {
+          flex: 1;
+          height: 8px;
+          background-color: var(--gauge-bg, #e9ecef);
+          border-radius: 4px;
+          overflow: hidden;
+        }
+        
+        .gauge-fill {
+          height: 100%;
+          transition: width 0.3s ease;
+          border-radius: 4px;
+        }
+        
+        .gauge-text {
+          font-weight: 600;
+          font-size: 12px;
+          color: var(--text-secondary, #6c757d);
+        }
+        
+        .info-explainer {
+          background-color: var(--info-bg, #e7f3ff);
+          border: 1px solid var(--info-border, #b3d9ff);
+          border-radius: 8px;
+          padding: 12px;
+          margin-top: 16px;
+        }
+        
+        .info-explainer h4 {
+          margin: 0 0 6px 0;
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--info-text, #0056b3);
+        }
+        
+        .info-explainer p {
+          margin: 0;
+          font-size: 12px;
+          line-height: 1.4;
+          color: var(--info-text-secondary, #004085);
+        }
+        
+        .key-findings {
+          background-color: var(--findings-bg, #fff3cd);
+          border: 1px solid var(--findings-border, #ffeaa7);
+          border-radius: 8px;
+          padding: 12px;
+          margin-top: 12px;
+        }
+        
+        .key-findings h4 {
+          margin: 0 0 8px 0;
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--findings-text, #856404);
+        }
+        
+        .key-findings ul {
+          margin: 0;
+          padding-left: 16px;
+          font-size: 12px;
+          color: var(--findings-text-secondary, #856404);
+        }
+      </style>
+      <div class="infodemic-popup" id="infodemic-popup">
+        <div class="infodemic-header">
+          <div class="infodemic-title">
+            <span class="icon-analysis"></span>
+            Follow the Money: ${siteName}
+          </div>
+          <button class="infodemic-close" id="infodemic-close">✕</button>
+        </div>
+        <div class="infodemic-content">
+          <div class="risk-indicator">
+            <span class="risk-icon">${riskDisplay.icon}</span>
+            <span class="risk-text">${riskDisplay.text}</span>
+          </div>
+          
+          <div class="funding-section">
+            <h4>🏢 Ownership Structure</h4>
+            <p><strong>Registered Owner:</strong> ${fundingData.registeredOwner}</p>
+            <p><strong>Parent Company:</strong> ${fundingData.parentCompany}</p>
+          </div>
+          
+          <div class="funding-section">
+            <h4>💰 Funding Sources</h4>
+            <ul>
+              ${fundingData.fundingSources.map(source => `<li>${source}</li>`).join('')}
+            </ul>
+            ${fundingData.majorInvestors.length > 0 ? `
+              <p style="margin-top: 8px;"><strong>Major Investors:</strong></p>
+              <ul>
+                ${fundingData.majorInvestors.map(investor => `<li>${investor}</li>`).join('')}
+              </ul>
+            ` : ''}
+          </div>
+          
+          <div class="funding-section">
+            <h4>📊 Transparency Assessment</h4>
+            <p style="margin-bottom: 8px;"><strong>Transparency Score:</strong></p>
+            ${createScoreGauge(fundingData.transparencyScore)}
+            <p style="margin-top: 8px;"><strong>Funding Model:</strong> ${fundingData.advertisingModel}</p>
+            <p><strong>Transparency Level:</strong> ${fundingData.fundingTransparency}</p>
+          </div>
+          
+          <div class="funding-section">
+            <h4>🔍 Potential Influences</h4>
+            <p><strong>Political Affiliations:</strong> ${fundingData.politicalAffiliations}</p>
+            <p><strong>Conflicts of Interest:</strong> ${fundingData.conflictsOfInterest}</p>
+            <p style="margin-top: 8px;"><strong>Risk Assessment:</strong> ${fundingData.riskExplanation}</p>
+          </div>
+          
+          ${fundingData.keyFindings.length > 0 ? `
+            <div class="key-findings">
+              <h4>🔑 Key Findings</h4>
+              <ul>
+                ${fundingData.keyFindings.map(finding => `<li>${finding}</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+          
+          <div class="info-explainer">
+            <h4>💡 Why This Matters</h4>
+            <p>Understanding funding sources helps identify potential biases and conflicts of interest that could influence content. This transparency is crucial for evaluating the reliability and objectivity of information sources in our fight against misinformation.</p>
+          </div>
+        </div>
+        <div class="infodemic-footer">
+          <div>Infodemic Fighter</div>
+          <div>v${chrome.runtime.getManifest().version}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Function to create a generic error popup
+function createErrorPopup(message, settings) {
+  const theme = settings?.darkMode ? 'dark-mode' : 'light-mode';
+  const styles = getPopupStyles(theme);
+  const version = chrome.runtime.getManifest().version;
+  
+  return `
+    <div id="infodemic-container">
+      <style>${styles}</style>
+      <div class="infodemic-popup" id="infodemic-popup">
+        <div class="infodemic-header">
+          <div class="infodemic-title">
+            <span class="icon-analysis"></span>
+            Error
+          </div>
+          <button class="infodemic-close" id="infodemic-close">✕</button>
+        </div>
+        <div class="infodemic-content">
+          <p>${message}</p>
+        </div>
+        <div class="infodemic-footer">
+          <div>Infodemic Fighter</div>
+          <div>v${version}</div>
+        </div>
+      </div>
+    </div>
+  `;
 }

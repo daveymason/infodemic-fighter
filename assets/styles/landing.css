@@ -1,0 +1,154 @@
+/* General */
+body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    margin: 0;
+    line-height: 1.6;
+    background-color: #FFFFFF;
+    color: #333333;
+    font-size: 16px;
+}
+
+.container {
+    width: 90%;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Hero Section */
+.hero {
+    text-align: center;
+    padding: 50px 20px;
+    background-color: #F0F0F0; /* Light Gray background for hero */
+    margin-bottom: 30px;
+    border-radius: 8px;
+}
+
+.hero-logo {
+    width: 80px; /* Adjust size as needed */
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.hero h1 {
+    font-size: 2.8em;
+    color: #333333;
+    margin-bottom: 0.5em;
+}
+
+.hero p {
+    font-size: 1.3em;
+    color: #555555;
+    margin-bottom: 1.5em;
+}
+
+.cta-button {
+    display: inline-block;
+    background-color: #007BFF; /* Blue */
+    color: #FFFFFF;
+    padding: 12px 25px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.cta-button:hover {
+    background-color: #0056b3; /* Darker Blue */
+}
+
+/* Sections */
+section {
+    padding: 20px 0;
+    margin-bottom: 30px;
+}
+
+section:not(.hero) {
+    background-color: #FFFFFF;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Typography */
+h1, h2 {
+    color: #333333;
+}
+
+h2 {
+    font-size: 2em;
+    border-bottom: 2px solid #007BFF; /* Blue accent for heading underline */
+    padding-bottom: 10px;
+    margin-top: 0; /* Remove default top margin */
+    margin-bottom: 20px;
+}
+
+p {
+    margin-bottom: 1em;
+}
+
+ul {
+    list-style: disc;
+    margin-left: 20px;
+    padding-left: 0; /* Adjust if needed */
+}
+
+li {
+    margin-bottom: 0.5em;
+}
+
+/* USP List */
+#features ul {
+    list-style-type: none; /* Remove default bullets */
+    padding-left: 0;
+}
+
+#features li {
+    background-color: #F9F9F9; /* Slightly different background for list items */
+    padding: 10px 15px; /* Adjusted padding */
+    border-left: 4px solid #007BFF; /* Accent color border */
+    margin-bottom: 8px;
+    border-radius: 4px;
+    display: flex; /* For aligning icon and text */
+    align-items: center; /* Vertically align items */
+}
+
+.usp-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px; /* Space between icon and text */
+}
+
+#features li strong {
+    color: #0056b3; /* Darker blue for emphasis */
+}
+
+/* Links */
+a {
+    color: #007BFF;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Basic Responsive Behavior */
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2.2em;
+    }
+    .hero p {
+        font-size: 1.1em;
+    }
+    h2 {
+        font-size: 1.8em;
+    }
+    .container {
+        width: 95%;
+    }
+    .hero-logo {
+        width: 60px;
+    }
+}

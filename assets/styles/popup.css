@@ -27,6 +27,7 @@ body {
 
 #app {
   padding: 0;
+  /* Add padding-bottom to make space for the footer link if it's inside #app */
 }
 
 /* Header with scientific branding */
@@ -436,6 +437,27 @@ input:checked + .slider:before {
 #content-perplexity .info-box strong {
   color: var(--text-primary);
   font-weight: var(--font-weight-semibold);
+}
+
+/* Footer Link Styles */
+.footer-link-container {
+  padding: var(--size-sm) var(--size-md); /* Consistent padding */
+  text-align: center;
+  background-color: var(--bg-elevated); /* Subtle background */
+  border-top: 1px solid var(--border-color); /* Separator line */
+}
+
+.learn-more-link {
+  color: var(--accent-primary); /* Use accent color for the link */
+  text-decoration: none;
+  font-size: 13px; /* Slightly smaller font size */
+  font-weight: var(--font-weight-medium);
+  transition: color var(--transition-normal), text-decoration var(--transition-normal);
+}
+
+.learn-more-link:hover {
+  color: var(--accent-primary-dark); /* Darken link on hover */
+  text-decoration: underline;
 }
 
 /* Animations (ensure these are defined in common.css or here if not) */

@@ -1504,33 +1504,28 @@ function extractPublisherFromUrl(url) {
 
 // Check source text against bias database - for AP News and other text-based matching
 function checkSourceText(sourceText) {
+  console.log(`🔍 checkSourceText called with: "${sourceText}"`);
   sourceText = sourceText.toLowerCase();
+  console.log(`🔍 Normalized source text: "${sourceText}"`);
   
-  // Special cases for common media outlets
-  if (sourceText.includes('ap ') || sourceText.includes('associated press')) {
-    console.log('Found AP News via source text');
-    return {
-      bias: 'center',
-      reliability: 'high',
-      name: 'Associated Press'
-    };
-  }
-  
-  if (sourceText.includes('reuters')) {
-    console.log('Found Reuters via source text');
-    return {
-      bias: 'center',
-      reliability: 'high',
-      name: 'Reuters'
-    };
-  }
-  
-  // Try direct name match
+  // Try direct name match first
   for (const domain in biasDatabase) {
-    const name = biasDatabase[domain].name.toLowerCase();
-    if (sourceText.includes(name) || name.includes(sourceText)) {
-      console.log(`Found name match: ${name} in source: ${sourceText}`);
-      return biasDatabase[domain];
+    if (biasDatabase[domain].name) {
+      const name = biasDatabase[domain].name.toLowerCase();
+      // Check if the source text contains the outlet name or vice versa
+      if (sourceText.includes(name) || name.includes(sourceText)) {
+        console.log(`✅ Found name match: ${name} in source: ${sourceText}`);
+        return biasDatabase[domain];
+      }
+      
+      // Also try matching without parenthetical content
+      const nameWithoutParens = name.replace(/\s*\([^)]*\)/g, '').trim();
+      if (nameWithoutParens !== name) {
+        if (sourceText.includes(nameWithoutParens) || nameWithoutParens.includes(sourceText)) {
+          console.log(`✅ Found name match (without parens): ${nameWithoutParens} in source: ${sourceText}`);
+          return biasDatabase[domain];
+        }
+      }
     }
   }
   
@@ -1538,11 +1533,12 @@ function checkSourceText(sourceText) {
   for (const domain in biasDatabase) {
     const domainWithoutTld = domain.replace(/\.\w+$/, '').toLowerCase();
     if (sourceText.includes(domainWithoutTld)) {
-      console.log(`Found domain match: ${domainWithoutTld} in source: ${sourceText}`);
+      console.log(`✅ Found domain match: ${domainWithoutTld} in source: ${sourceText}`);
       return biasDatabase[domain];
     }
   }
   
+  console.log(`🔴 No match found for source: ${sourceText}`);
   return getUnknownBiasData(sourceText);
 }
 

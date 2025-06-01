@@ -358,7 +358,7 @@
     container.className = 'infodemic-indicator';
     container.style.display = 'inline-flex';
     container.style.alignItems = 'center';
-    container.style.marginLeft = '21px'; // Increased margin for better spacing from search results
+    container.style.marginLeft = '40px'; // Increased margin to avoid overlapping with three dots menu
     container.style.marginRight = '6px';
     container.style.gap = '8px';
     container.style.fontSize = '14px';
@@ -385,28 +385,33 @@
       biasPill.style.fontSize = '14px';
       biasPill.style.backgroundColor = 'transparent';
       
-      // Use clearer symbols instead of tiny arrows
+      // Use directional arrows for bias indicators
       let biasEmoji = '❓'; // Default
       switch(biasData.bias) {
         case 'left': 
-          biasEmoji = '◄';
-          biasPill.style.color = '#0000FF';
+          biasEmoji = '◄'; // Left arrow for left
+          biasPill.style.color = '#0066CC';
           break;
         case 'lean-left': 
-          biasEmoji = '◄◯';
-          biasPill.style.color = '#6495ED';
+          biasEmoji = '◄◯'; // Left arrow with circle for lean-left
+          biasPill.style.color = '#4DA6FF';
           break;
         case 'center': 
-          biasEmoji = '◯';
-          biasPill.style.color = '#808080';
+          biasEmoji = '◯'; // Circle for center
+          biasPill.style.color = '#666666';
           break;
         case 'lean-right': 
-          biasEmoji = '◯►';
-          biasPill.style.color = '#FFA500';
+          biasEmoji = '◯►'; // Circle with right arrow for lean-right
+          biasPill.style.color = '#FF8C00';
           break;
         case 'right': 
-          biasEmoji = '►';
-          biasPill.style.color = '#FF0000';
+          biasEmoji = '►'; // Right arrow for right
+          biasPill.style.color = '#CC0000';
+          break;
+        case 'unknown':
+        default:
+          biasEmoji = '❓';
+          biasPill.style.color = '#999999';
           break;
       }
       biasPill.textContent = biasEmoji;
@@ -426,20 +431,24 @@
       reliabilityPill.style.fontSize = '14px';
       reliabilityPill.style.backgroundColor = 'transparent';
       
-      // Use emoji for reliability
+      // Use simple symbols for reliability levels
       let reliabilityEmoji = '❓'; // Default
       switch(biasData.reliability) {
         case 'high': 
-          reliabilityEmoji = '✓';
-          reliabilityPill.style.color = '#4CAF50';
+          reliabilityEmoji = '●';
+          reliabilityPill.style.color = '#00AA00';
+          break;
+        case 'mostly-high': 
+          reliabilityEmoji = '◐';
+          reliabilityPill.style.color = '#66BB00';
           break;
         case 'medium': 
-          reliabilityEmoji = '!';
-          reliabilityPill.style.color = '#FF9800';
+          reliabilityEmoji = '◑';
+          reliabilityPill.style.color = '#FFA500';
           break;
         case 'low': 
-          reliabilityEmoji = '✗';
-          reliabilityPill.style.color = '#F44336';
+          reliabilityEmoji = '○';
+          reliabilityPill.style.color = '#FF0000';
           break;
       }
       reliabilityPill.textContent = reliabilityEmoji;
@@ -456,4 +465,51 @@
     // Return the container with tooltip inside
     return container;
   }
+  
+  // Helper function for debouncing
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Extract domain from URL
+  function extractDomain(url) {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname.replace('www.', '');
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Format bias label for display
+  function formatBiasLabel(bias) {
+    switch(bias) {
+      case 'left': return 'Left';
+      case 'lean-left': return 'Lean Left';
+      case 'center': return 'Center';
+      case 'lean-right': return 'Lean Right';
+      case 'right': return 'Right';
+      default: return 'Unknown';
+    }
+  }
+
+  // Format reliability label for display
+  function formatReliabilityLabel(reliability) {
+    switch(reliability) {
+      case 'high': return 'High';
+      case 'mostly-high': return 'Mostly High';
+      case 'medium': return 'Medium';
+      case 'low': return 'Low';
+      default: return 'Unknown';
+    }
+  }
+
 })();

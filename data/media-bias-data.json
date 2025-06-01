@@ -241,6 +241,7 @@
     "shareblue.com": { "bias": "left", "reliability": "low", "name": "Shareblue (Now Courier Newsroom)" },
     "skynews.com": { "bias": "lean-right", "reliability": "medium", "name": "Sky News (UK)" },
     "skynews.com.au": { "bias": "right", "reliability": "medium", "name": "Sky News Australia" },
+    "news.sky.com": { "bias": "lean-right", "reliability": "medium", "name": "Sky News" },
     "slate.com": { "bias": "left", "reliability": "high", "name": "Slate" },
     "snopes.com": { "bias": "center", "reliability": "high", "name": "Snopes" },
     "spectator.co.uk": { "bias": "lean-right", "reliability": "medium", "name": "The Spectator (UK)" },

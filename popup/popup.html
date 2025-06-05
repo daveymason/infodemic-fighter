@@ -1,28 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Infodemic Fighter</title>
-  <link rel="stylesheet" href="../assets/styles/popup.css">
-</head>
+<html lang="en">  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infodemic Fighter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/styles/popup.css">
+  </head>
 <body>
   <div id="app">
     <div id="header" class="header">
       <img src="../assets/icons/logo.png" alt="Infodemic Fighter Logo" class="logo">
       <h1>Infodemic Fighter</h1>
     </div>
-    
-    <!-- Scientific Tab Navigation -->
+      <!-- Scientific Tab Navigation -->
     <div class="tabs">
       <button id="tab-settings" class="active">
-        <span class="icon icon-microscope"></span>Settings
+        <i class="fas fa-cog icon"></i>Settings
       </button>
       <button id="tab-perplexity">
-        <span class="icon icon-analysis"></span>Perplexity
+        <i class="fas fa-search-dollar icon"></i>Analysis
       </button>
       <button id="tab-about">
-        <span class="icon icon-lab"></span>About
+        <i class="fas fa-info-circle icon"></i>About
       </button>
     </div>
     
@@ -86,7 +85,7 @@
       </div>
       <p>Infodemic Fighter applies scientific methodology to help researchers, academics, and critical thinkers navigate the information landscape by providing objective indicators of media bias and reliability.</p>
       <p>Our algorithm analyzes historical data patterns to identify factual reporting standards and political orientation of news sources, all displayed through a clear, evidence-based interface.</p>
-      <div class="version">Infodemic Fighter v0.1.3</div>
+      <div class="version" id="version-info">Infodemic Fighter v</div>
     </div>
   </div>
 

@@ -30,6 +30,14 @@ function applyTheme(isDarkMode) {
 // Load settings when popup opens
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Popup loaded');
+  
+  // Load version number from manifest
+  const manifest = chrome.runtime.getManifest();
+  const versionElement = document.getElementById('version-info');
+  if (versionElement) {
+    versionElement.textContent = `Infodemic Fighter v${manifest.version}`;
+  }
+  
   chrome.storage.local.get('settings', (data) => {
     const s = data.settings || {};
     console.log('Loaded settings:', s);

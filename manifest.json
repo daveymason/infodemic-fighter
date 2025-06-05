@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Infodemic Fighter",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Shows political bias and reliability indicators for news sources in search results",
   "icons": {
     "16": "/assets/icons/icon16.png",
@@ -51,7 +51,9 @@
       ],
       "run_at": "document_end"
     }
-  ],
+  ],  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com;"
+  },
   "web_accessible_resources": [{
     "resources": [
       "data/media-bias-data.json",

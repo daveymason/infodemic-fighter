@@ -17,12 +17,30 @@ body {
   background-color: var(--bg-surface);
   color: var(--text-primary);
   transition: background-color var(--transition-normal), color var(--transition-normal);
-  width: 384px; /* Increased width by 20% (320px * 1.2 = 384px) */
+  width: 384px; /* Default width for desktop */
+  min-width: 320px; /* Minimum width */
+  max-width: 100vw; /* Don't exceed viewport width */
   padding: 0;
   line-height: var(--line-height-base);
   box-shadow: var(--shadow-lg);
   border-radius: var(--radius-lg);
   overflow: hidden;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 480px) {
+  body {
+    width: 100vw;
+    max-width: 360px;
+    border-radius: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  body {
+    width: 100vw;
+    max-width: 320px;
+  }
 }
 
 #app {
@@ -135,7 +153,7 @@ h1 {
   animation: fadeIn 0.3s var(--ease-out);
 }
 
-/* Scientific icons */
+/* Font Awesome and scientific icons */
 .icon {
   margin-right: 6px;
   font-size: 14px;
@@ -144,15 +162,18 @@ h1 {
   width: 1em; /* Ensure icons have a defined size */
   height: 1em; /* Ensure icons have a defined size */
   vertical-align: text-bottom; /* Align icons nicely with text */
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
 }
 
-/* Specific icons - ensure these paths are correct relative to popup.css */
-.icon-microscope { background-image: url('../icons/microscope.svg'); }
-.icon-lab { background-image: url('../icons/lab.svg'); }
-.icon-analysis { background-image: url('../icons/analysis.svg'); } /* New icon for Perplexity */
+/* Font Awesome specific styles */
+.icon.fas, .icon.far, .icon.fab {
+  background: none !important;
+  background-image: none !important;
+}
+
+/* Fallback for SVG icons - ensure these paths are correct relative to popup.css */
+.icon-microscope { background-image: url('../icons/microscope.svg'); background-repeat: no-repeat; background-position: center; background-size: contain; }
+.icon-lab { background-image: url('../icons/lab.svg'); background-repeat: no-repeat; background-position: center; background-size: contain; }
+.icon-analysis { background-image: url('../icons/analysis.svg'); background-repeat: no-repeat; background-position: center; background-size: contain; }
 
 .tabs button:hover .icon {
   transform: translateY(-2px);
@@ -169,6 +190,13 @@ h1 {
   animation: fadeIn var(--transition-normal) var(--ease-out);
 }
 
+/* Responsive tab content */
+@media (max-width: 360px) {
+  .tab-content {
+    padding: var(--size-sm);
+  }
+}
+
 /* Toggle Switch - Scientific styling */
 .toggle-container {
   display: flex;
@@ -182,6 +210,17 @@ h1 {
   border: 1px solid var(--border-color);
   transition: transform var(--transition-normal) var(--ease-out),
     box-shadow var(--transition-normal) var(--ease-out);
+  gap: var(--size-xs); /* Add gap for better spacing */
+}
+
+/* Responsive toggle containers */
+@media (max-width: 360px) {
+  .toggle-container {
+    padding: var(--size-xs);
+    font-size: 13px;
+    flex-wrap: wrap;
+    gap: var(--size-xs);
+  }
 }
 
 .toggle-container:hover {
@@ -355,6 +394,13 @@ input:checked + .slider:before {
 #content-perplexity .input-group:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+}
+
+/* Responsive input groups */
+@media (max-width: 360px) {
+  #content-perplexity .input-group {
+    padding: var(--size-xs);
+  }
 }
 
 #content-perplexity .input-group label {

@@ -1050,13 +1050,12 @@ function getPopupStyles(theme) {
       display: flex; /* Added flex for layout */
       flex-direction: column; /* Stack elements vertically */
     }
-    
-    .infodemic-spinner {
+      .infodemic-spinner {
       width: 50px;
       height: 50px;
       border: 5px solid var(--bg-subtle, #f3f3f3); /* Light grey for the track */
-      border-top: 5px solid var(--color-blue-pill, #007bff); /* Blue for the spinner */
-      border-right: 5px solid var(--color-red-pill, #dc3545); /* Red for the spinner */
+      border-top: 5px solid var(--accent-primary, #007bff); /* Blue for the spinner */
+      border-right: 5px solid var(--accent-secondary, #dc3545); /* Red for the spinner */
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -1733,7 +1732,10 @@ function createLoadingPopup(settings) {
 }
 
 // Function to fetch data from Perplexity API
-async function fetchPerplexityData(tabId, siteUrl, apiKey) {
+async function fetchPerplexityData(tabId, siteUrl, apiKey, retryCount = 0) {
+  const maxRetries = 3;
+  const retryDelay = 1000; // 1 second
+  
   const prompt = `Analyze the funding and ownership of the website: ${siteUrl}. Provide information in this exact JSON format:
 
 {
@@ -1754,82 +1756,103 @@ async function fetchPerplexityData(tabId, siteUrl, apiKey) {
 Respond ONLY with valid JSON. If information is not available, use the placeholder values shown.`;
   
   // Get settings for consistent theming
-  chrome.storage.local.get(['settings'], (result) => {
-    const settings = result.settings;
+  chrome.storage.local.get(['settings'], async (result) => {
+    const settings = result.settings || {};
     
-    (async () => {
-      try {
-        const response = await fetch('https://api.perplexity.ai/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json'
-          },          body: JSON.stringify({
-            model: 'llama-3.1-sonar-small-128k-online', // Updated to current Perplexity model
-            messages: [
-              { 
-                role: 'system', 
-                content: 'You are a research assistant. Provide concise, factual information based on the user\'s query. Structure your response strictly according to the user\'s specified format.' 
-              },
-              { 
-                role: 'user', 
-                content: prompt 
-              }
-            ],
-            max_tokens: 500, // Increased limit for structured response
-            temperature: 0.1, // Low temperature for factual responses
-            stream: false
-          })
-        });
+    try {
+      // Show loading popup
+      const loadingHTML = createLoadingPopup(settings);
+      sendPopupToContentScript(tabId, loadingHTML);
+      
+      const response = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-sonar-small-128k-online',
+          messages: [
+            { 
+              role: 'system', 
+              content: 'You are a research assistant. Provide concise, factual information based on the user\'s query. Structure your response strictly according to the user\'s specified format.' 
+            },
+            { 
+              role: 'user', 
+              content: prompt 
+            }
+          ],
+          max_tokens: 500,
+          temperature: 0.1,
+          stream: false
+        })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Perplexity API error response:', response.status, errorText);
         
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Perplexity API error response:', errorText);
-          throw new Error(`Perplexity API error: ${response.status} - ${errorText}`);
-        }
-        
-        const data = await response.json();
-        
-        // Check if response has expected structure
-        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-          console.error('Unexpected API response structure:', data);
-          throw new Error('Invalid response format from Perplexity API');
-        }
-          const fundingInfo = data.choices[0].message.content;
-        
-        // Parse the JSON response
-        let parsedFundingData;
-        try {
-          parsedFundingData = parseFundingData(fundingInfo);
-        } catch (parseError) {
-          console.error('Error parsing funding data:', parseError);
-          // Fallback to plain text display if JSON parsing fails
-          parsedFundingData = {
-            error: true,
-            rawContent: fundingInfo
-          };
-        }
-        
-        const popupHTML = createFundingInfoPopup(siteUrl, parsedFundingData, settings);
-        sendPopupToContentScript(tabId, popupHTML);
-        
-      } catch (error) {
-        console.error('Error fetching Perplexity data:', error);
-          // Create more specific error message
-        let errorMessage = "Error fetching funding information. ";
-        if (error.message.includes('401')) {
-          errorMessage += "Please check your API key in settings.";
-        } else if (error.message.includes('429')) {
-          errorMessage += "Rate limit exceeded. Please try again later.";
-        } else if (error.message.includes('400')) {
-          errorMessage += "Invalid request format. Please try again.";
+        // Handle specific error types
+        if (response.status === 401) {
+          throw new Error('Invalid API key. Please check your Perplexity API key in settings.');
+        } else if (response.status === 429) {
+          throw new Error('Rate limit exceeded. Please try again in a few minutes.');
+        } else if (response.status >= 500) {
+          throw new Error('Perplexity API server error. Please try again later.');
         } else {
-          errorMessage += "Please try again later.";
+          throw new Error(`API request failed with status ${response.status}`);
         }
-        
-        const popupHTML = createErrorPopup(errorMessage, settings);
-        sendPopupToContentScript(tabId, popupHTML);
-      }    })();
+      }
+      
+      const data = await response.json();
+      
+      // Validate response structure
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        console.error('Unexpected API response structure:', data);
+        throw new Error('Invalid response format from Perplexity API');
+      }
+      
+      const fundingInfo = data.choices[0].message.content;
+      
+      // Parse the JSON response with error handling
+      let parsedFundingData;
+      try {
+        parsedFundingData = parseFundingData(fundingInfo);
+      } catch (parseError) {
+        console.error('Error parsing funding data:', parseError);
+        // Fallback to raw content if parsing fails
+        parsedFundingData = {
+          error: true,
+          rawContent: fundingInfo,
+          errorMessage: 'Unable to parse API response'
+        };
+      }
+      
+      // Create and send the popup
+      const popupHTML = createFundingInfoPopup(siteUrl, parsedFundingData, settings);
+      sendPopupToContentScript(tabId, popupHTML);
+      
+    } catch (error) {
+      console.error('Error fetching Perplexity data:', error);
+      
+      // Implement retry logic for network errors
+      if (retryCount < maxRetries && (
+        error.message.includes('fetch') ||
+        error.message.includes('network') ||
+        error.message.includes('server error')
+      )) {
+        console.log(`Retrying API call (attempt ${retryCount + 1}/${maxRetries})...`);
+        setTimeout(() => {
+          fetchPerplexityData(tabId, siteUrl, apiKey, retryCount + 1);
+        }, retryDelay * (retryCount + 1)); // Exponential backoff
+        return;
+      }
+      
+      // Show error popup if retries exhausted or non-retryable error
+      const errorMessage = error.message || 'An unexpected error occurred while fetching funding information.';
+      const errorHTML = createErrorPopup(errorMessage, settings);
+      sendPopupToContentScript(tabId, errorHTML);
+    }
   });
 }
 

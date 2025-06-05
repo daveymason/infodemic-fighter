@@ -34,9 +34,8 @@ function createBiasIndicator(biasData) {
   pillContainer.style.display = 'inline-flex';
   pillContainer.style.gap = '6px';
   pillContainer.style.transition = 'transform 0.2s ease';
-  
-  // Create bias pill if enabled
-  if (duckduckgoSettings.showBiasIndicator) {
+    // Create bias pill if enabled and bias data is known
+  if (duckduckgoSettings.showBiasIndicator && biasData.bias !== 'unknown') {
     const biasPill = document.createElement('span');
     biasPill.className = `bias-indicator bias-${biasData.bias}`;
     biasPill.style.display = 'inline-flex';
@@ -48,7 +47,7 @@ function createBiasIndicator(biasData) {
     biasPill.style.backgroundColor = 'transparent';
     
     // Use directional arrows for bias indicators
-    let biasEmoji = '❓'; // Default
+    let biasEmoji = '';
     switch(biasData.bias) {
       case 'left': 
         biasEmoji = '◄'; // Left arrow for left
@@ -70,18 +69,14 @@ function createBiasIndicator(biasData) {
         biasEmoji = '►'; // Right arrow for right
         biasPill.style.color = '#CC0000';
         break;
-      case 'unknown':
-      default:
-        biasEmoji = '❓';
-        biasPill.style.color = '#999999';
-        break;
     }
-    biasPill.textContent = biasEmoji;
-    biasPill.style.textShadow = '0 1px 1px rgba(0,0,0,0.2)';
-    pillContainer.appendChild(biasPill);
+    if (biasEmoji) {
+      biasPill.textContent = biasEmoji;
+      biasPill.style.textShadow = '0 1px 1px rgba(0,0,0,0.2)';
+      pillContainer.appendChild(biasPill);
+    }
   }
-  
-  // Create reliability indicator if enabled
+    // Create reliability indicator if enabled and reliability data is known
   if (duckduckgoSettings.showReliabilityIndicator && biasData.reliability !== 'unknown') {
     const reliabilityPill = document.createElement('span');
     reliabilityPill.className = `reliability-indicator reliability-${biasData.reliability}`;
@@ -92,32 +87,38 @@ function createBiasIndicator(biasData) {
     reliabilityPill.style.fontWeight = 'bold';
     reliabilityPill.style.fontSize = '14px';
     reliabilityPill.style.backgroundColor = 'transparent';      // Use simple geometric symbols for reliability levels (won't appear upside down)
-      let reliabilityEmoji = '❓'; // Default
-      switch(biasData.reliability) {
-        case 'high': 
-          reliabilityEmoji = '●'; // Filled circle for high reliability
-          reliabilityPill.style.color = '#00AA00';
-          break;
-        case 'mostly-high': 
-          reliabilityEmoji = '◐'; // Half-filled circle for mostly-high reliability
-          reliabilityPill.style.color = '#66BB00';
-          break;
-        case 'medium': 
-          reliabilityEmoji = '◑'; // Different half-filled circle for medium reliability
-          reliabilityPill.style.color = '#FFA500';
-          break;
-        case 'low': 
-          reliabilityEmoji = '○'; // Empty circle for low reliability
-          reliabilityPill.style.color = '#FF0000';
-          break;
-      }
-    reliabilityPill.textContent = reliabilityEmoji;
-    reliabilityPill.style.textShadow = '0 1px 1px rgba(0,0,0,0.2)';
-    pillContainer.appendChild(reliabilityPill);
+    let reliabilityEmoji = '';
+    switch(biasData.reliability) {
+      case 'high': 
+        reliabilityEmoji = '●'; // Filled circle for high reliability
+        reliabilityPill.style.color = '#00AA00';
+        break;
+      case 'mostly-high': 
+        reliabilityEmoji = '◐'; // Half-filled circle for mostly-high reliability
+        reliabilityPill.style.color = '#66BB00';
+        break;
+      case 'medium': 
+        reliabilityEmoji = '◑'; // Different half-filled circle for medium reliability
+        reliabilityPill.style.color = '#FFA500';
+        break;
+      case 'low': 
+        reliabilityEmoji = '○'; // Empty circle for low reliability
+        reliabilityPill.style.color = '#FF0000';
+        break;
+    }
+    if (reliabilityEmoji) {
+      reliabilityPill.textContent = reliabilityEmoji;
+      reliabilityPill.style.textShadow = '0 1px 1px rgba(0,0,0,0.2)';
+      pillContainer.appendChild(reliabilityPill);
+    }
   }
-  
-  // Add pill container to main container
+    // Add pill container to main container
   container.appendChild(pillContainer);
+
+  // If no pills were added (both bias and reliability unknown), return null
+  if (pillContainer.children.length === 0) {
+    return null;
+  }
 
   // Format bias and reliability labels for tooltip
   const formatBiasLabel = (bias) => {
@@ -178,13 +179,13 @@ function processDuckDuckGoSearch() {
     
     // Check URL against bias database
     chrome.runtime.sendMessage({ type: 'CHECK_URL', url }, (response) => {
-      if (response && response.biasData) {
-        // Create and insert bias indicator
+      if (response && response.biasData) {        // Create and insert bias indicator
         const indicator = createBiasIndicator(response.biasData);
-        
-        // Find the right place to insert the indicator
-        const titleElement = linkElement.closest('h2') || linkElement;
-        titleElement.insertAdjacentElement('afterend', indicator);
+        if (indicator) {
+          // Find the right place to insert the indicator
+          const titleElement = linkElement.closest('h2') || linkElement;
+          titleElement.insertAdjacentElement('afterend', indicator);
+        }
       }
     });
   });

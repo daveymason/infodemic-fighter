@@ -42,10 +42,46 @@
       detectSearchEngine();
     }
   });
-  
-  // Track popup state to prevent errors
+    // Track popup state to prevent errors
   let popupActive = false;
   let autoCloseTimer = null;
+  
+  // Cleanup management
+  const cleanupTasks = [];
+  
+  // Function to register cleanup tasks
+  function registerCleanup(task) {
+    cleanupTasks.push(task);
+  }
+  
+  // Function to run all cleanup tasks
+  function runCleanup() {
+    console.log('Running content script cleanup...');
+    cleanupTasks.forEach(task => {
+      try {
+        task();
+      } catch (error) {
+        console.error('Error during cleanup:', error);
+      }
+    });
+    cleanupTasks.length = 0; // Clear the array
+  }
+  
+  // Run cleanup when page unloads
+  window.addEventListener('beforeunload', runCleanup);
+  window.addEventListener('unload', runCleanup);
+  
+  // Also run cleanup on visibility change (when tab becomes hidden)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      // Cleanup when tab becomes hidden for a while
+      setTimeout(() => {
+        if (document.visibilityState === 'hidden') {
+          runCleanup();
+        }
+      }, 60000); // 1 minute delay
+    }
+  });
   
   // Listen for messages from the background script
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -91,8 +127,7 @@
       console.error('Error injecting popup:', error);
     }
   }
-  
-  // Function to clean up existing popup
+    // Function to clean up existing popup
   function removeExistingPopup() {
     try {
       const existingPopup = document.getElementById('infodemic-container');
@@ -102,12 +137,21 @@
       
       // Reset popup state
       popupActive = false;
-      clearTimeout(autoCloseTimer);
+      if (autoCloseTimer) {
+        clearTimeout(autoCloseTimer);
+        autoCloseTimer = null;
+      }
       
     } catch (error) {
       console.error('Error removing popup:', error);
     }
   }
+  
+  // Register popup cleanup
+  registerCleanup(() => {
+    removeExistingPopup();
+    console.log('Cleaned up popups');
+  });
   
   // Detect which search engine we're on
   function detectSearchEngine() {
@@ -232,10 +276,11 @@
       if (!insertAfter) {
         insertAfter = container.querySelector('a[href^="http"]');
       }
-      
-      if (insertAfter) {
+        if (insertAfter) {
         const indicator = createBiasIndicator(response.biasData);
-        insertAfter.insertAdjacentElement('afterend', indicator);
+        if (indicator) {
+          insertAfter.insertAdjacentElement('afterend', indicator);
+        }
       }
     });
   }
@@ -338,17 +383,31 @@
       attributes: false, // Don't need attribute changes
       characterData: false // Don't need text changes
     });
-    
-    // Store the observer to be able to disconnect it if needed
+      // Store the observer to be able to disconnect it if needed
     window.infodemicFighterObserver = observer;
     
-    // Safety mechanism: disconnect the observer after 2 minutes to prevent memory issues
-    setTimeout(() => {
+    // Register cleanup for the observer
+    registerCleanup(() => {
       if (window.infodemicFighterObserver) {
         window.infodemicFighterObserver.disconnect();
+        window.infodemicFighterObserver = null;
+        console.log('Cleaned up mutation observer');
+      }
+    });
+    
+    // Safety mechanism: disconnect the observer after 2 minutes to prevent memory issues
+    const timeoutId = setTimeout(() => {
+      if (window.infodemicFighterObserver) {
+        window.infodemicFighterObserver.disconnect();
+        window.infodemicFighterObserver = null;
         console.log('Disconnected mutation observer after timeout');
       }
     }, 120000); // 2 minutes
+    
+    // Register cleanup for the timeout
+    registerCleanup(() => {
+      clearTimeout(timeoutId);
+    });
   }
   
   // Create bias indicator using emoji
@@ -373,91 +432,94 @@
     pillContainer.style.gap = '6px';
     pillContainer.style.transition = 'transform 0.2s ease';
     
-    // Create bias pill if enabled
-    if (settings.showBiasIndicator) {
-      const biasPill = document.createElement('span');
-      biasPill.className = `bias-indicator bias-${biasData.bias}`;
-      biasPill.style.display = 'inline-flex';
-      biasPill.style.alignItems = 'center';
-      biasPill.style.justifyContent = 'center';
-      biasPill.style.padding = '2px 4px';
-      biasPill.style.fontWeight = 'bold';
-      biasPill.style.fontSize = '14px';
-      biasPill.style.backgroundColor = 'transparent';
-      
-      // Use directional arrows for bias indicators
-      let biasEmoji = '❓'; // Default
-      switch(biasData.bias) {
-        case 'left': 
-          biasEmoji = '◄'; // Left arrow for left
-          biasPill.style.color = '#0066CC';
-          break;
-        case 'lean-left': 
-          biasEmoji = '◄◯'; // Left arrow with circle for lean-left
-          biasPill.style.color = '#4DA6FF';
-          break;
-        case 'center': 
-          biasEmoji = '◯'; // Circle for center
-          biasPill.style.color = '#666666';
-          break;
-        case 'lean-right': 
-          biasEmoji = '◯►'; // Circle with right arrow for lean-right
-          biasPill.style.color = '#FF8C00';
-          break;
-        case 'right': 
-          biasEmoji = '►'; // Right arrow for right
-          biasPill.style.color = '#CC0000';
-          break;
-        case 'unknown':
-        default:
-          biasEmoji = '❓';
-          biasPill.style.color = '#999999';
-          break;
-      }
+  // Create bias pill if enabled and bias data is known
+  if (settings.showBiasIndicator && biasData.bias !== 'unknown') {
+    const biasPill = document.createElement('span');
+    biasPill.className = `bias-indicator bias-${biasData.bias}`;
+    biasPill.style.display = 'inline-flex';
+    biasPill.style.alignItems = 'center';
+    biasPill.style.justifyContent = 'center';
+    biasPill.style.padding = '2px 4px';
+    biasPill.style.fontWeight = 'bold';
+    biasPill.style.fontSize = '14px';
+    biasPill.style.backgroundColor = 'transparent';
+    
+    // Use directional arrows for bias indicators
+    let biasEmoji = '';
+    switch(biasData.bias) {
+      case 'left': 
+        biasEmoji = '◄'; // Left arrow for left
+        biasPill.style.color = '#0066CC';
+        break;
+      case 'lean-left': 
+        biasEmoji = '◄◯'; // Left arrow with circle for lean-left
+        biasPill.style.color = '#4DA6FF';
+        break;
+      case 'center': 
+        biasEmoji = '◯'; // Circle for center
+        biasPill.style.color = '#666666';
+        break;
+      case 'lean-right': 
+        biasEmoji = '◯►'; // Circle with right arrow for lean-right
+        biasPill.style.color = '#FF8C00';
+        break;
+      case 'right': 
+        biasEmoji = '►'; // Right arrow for right
+        biasPill.style.color = '#CC0000';
+        break;
+    }
+    if (biasEmoji) {
       biasPill.textContent = biasEmoji;
       biasPill.style.textShadow = '0 1px 1px rgba(0,0,0,0.2)';
       pillContainer.appendChild(biasPill);
     }
+  }
     
-    // Create reliability indicator if enabled
-    if (settings.showReliabilityIndicator && biasData.reliability !== 'unknown') {
-      const reliabilityPill = document.createElement('span');
-      reliabilityPill.className = `reliability-indicator reliability-${biasData.reliability}`;
-      reliabilityPill.style.display = 'inline-flex';
-      reliabilityPill.style.alignItems = 'center';
-      reliabilityPill.style.justifyContent = 'center';
-      reliabilityPill.style.padding = '2px 4px';
-      reliabilityPill.style.fontWeight = 'bold';
-      reliabilityPill.style.fontSize = '14px';
-      reliabilityPill.style.backgroundColor = 'transparent';
-      
-      // Use simple symbols for reliability levels
-      let reliabilityEmoji = '❓'; // Default
-      switch(biasData.reliability) {
-        case 'high': 
-          reliabilityEmoji = '●';
-          reliabilityPill.style.color = '#00AA00';
-          break;
-        case 'mostly-high': 
-          reliabilityEmoji = '◐';
-          reliabilityPill.style.color = '#66BB00';
-          break;
-        case 'medium': 
-          reliabilityEmoji = '◑';
-          reliabilityPill.style.color = '#FFA500';
-          break;
-        case 'low': 
-          reliabilityEmoji = '○';
-          reliabilityPill.style.color = '#FF0000';
-          break;
-      }
+  // Create reliability indicator if enabled and reliability data is known
+  if (settings.showReliabilityIndicator && biasData.reliability !== 'unknown') {
+    const reliabilityPill = document.createElement('span');
+    reliabilityPill.className = `reliability-indicator reliability-${biasData.reliability}`;
+    reliabilityPill.style.display = 'inline-flex';
+    reliabilityPill.style.alignItems = 'center';
+    reliabilityPill.style.justifyContent = 'center';
+    reliabilityPill.style.padding = '2px 4px';
+    reliabilityPill.style.fontWeight = 'bold';
+    reliabilityPill.style.fontSize = '14px';
+    reliabilityPill.style.backgroundColor = 'transparent';
+    
+    // Use simple symbols for reliability levels
+    let reliabilityEmoji = '';
+    switch(biasData.reliability) {
+      case 'high': 
+        reliabilityEmoji = '●';
+        reliabilityPill.style.color = '#00AA00';
+        break;
+      case 'mostly-high': 
+        reliabilityEmoji = '◐';
+        reliabilityPill.style.color = '#66BB00';
+        break;
+      case 'medium': 
+        reliabilityEmoji = '◑';
+        reliabilityPill.style.color = '#FFA500';
+        break;
+      case 'low': 
+        reliabilityEmoji = '○';
+        reliabilityPill.style.color = '#FF0000';
+        break;
+    }
+    if (reliabilityEmoji) {
       reliabilityPill.textContent = reliabilityEmoji;
       reliabilityPill.style.textShadow = '0 1px 1px rgba(0,0,0,0.2)';
       pillContainer.appendChild(reliabilityPill);
     }
-    
-    // Add pill container to main container
+  }
+      // Add pill container to main container
     container.appendChild(pillContainer);
+
+    // If no pills were added (both bias and reliability unknown), return null
+    if (pillContainer.children.length === 0) {
+      return null;
+    }
 
     // Use native browser tooltip for bias info
     container.title = `${biasData.name || 'Unknown Source'}\nBias: ${formatBiasLabel(biasData.bias)}\nReliability: ${formatReliabilityLabel(biasData.reliability)}`;

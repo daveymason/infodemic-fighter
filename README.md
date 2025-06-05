@@ -1,6 +1,6 @@
 # Infodemic Fighter
 
-A lightweight Chrome extension that adds subtle bias and reliability indicators to search results on Google, Bing, and DuckDuckGo. **Received a Perplexity Power-Up** - uses the Sonar API to "Follow the Money" feature, giving users the ability to research who funds media sources.
+A lightweight Chrome extension that adds subtle bias and reliability indicators to search results on Google, Bing, and DuckDuckGo. **Received a Perplexity Power-Up** - uses the Sonar API to "Follow the Money", giving users the ability to research who funds media sources.
 
 ## Quick Start
 

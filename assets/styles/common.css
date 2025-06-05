@@ -88,15 +88,19 @@
   --line-height-tight: 1.2;
   --letter-spacing-tight: -0.01em;
   --letter-spacing-wide: 0.02em;
-  
-  /* Light mode (default) */
+    /* Light mode (default) */
   --bg-surface: var(--neutral-100);
   --bg-elevated: white;
+  --bg-subtle: #f8f9fa;
   --text-primary: var(--neutral-900);
   --text-secondary: var(--neutral-700);
   --text-tertiary: var(--neutral-600);
   --border-color: var(--neutral-300);
+  --border-color-strong: #d1d5db;
   --accent-primary: var(--color-blue-pill);
+  --accent-primary-dark: #0056b3;
+  --accent-primary-darker: #004085;
+  --accent-primary-faded: rgba(70, 194, 255, 0.2);
   --accent-secondary: var(--color-red-pill);
   
   /* Tooltip and indicator colors - light mode */
@@ -113,13 +117,18 @@
 .dark-mode {
   --bg-surface: var(--neutral-900);
   --bg-elevated: var(--neutral-800);
+  --bg-subtle: #404040;
   --text-primary: var(--neutral-100);
   --text-secondary: var(--neutral-300);
   --text-tertiary: var(--neutral-400);
   --border-color: var(--neutral-700);
+  --border-color-strong: #666666;
   
   /* Adjust accent colors slightly for better contrast in dark mode */
   --accent-primary: #56C7FF; /* Slightly brighter blue */
+  --accent-primary-dark: #3B9AE1;
+  --accent-primary-darker: #2980B9;
+  --accent-primary-faded: rgba(86, 199, 255, 0.2);
   --accent-secondary: #B54141; /* Slightly brighter red */
   
   /* Tooltip and indicator colors - dark mode */
